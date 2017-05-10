@@ -14,77 +14,325 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** Paths of documentation *)
-
-(** {3 Sexp serialization} *)
-
-type sexp =
-  | List of sexp list
-  | Atom of string
-
-val string_of_sexp : sexp -> string
-
-(**/**)
-
-val contains_double_underscore : string -> bool
-(* not the best place for this but. *)
-
-(**/**)
+open DocOckNames
 
 (** {1 Paths} *)
 
-(** Every path is annotated with its kind. *)
-module Kind : sig
+(** Identifiers for definitions *)
+module Identifier : sig
 
-  (** {4 General purpose kinds} *)
+  module rec Module : sig
 
-  (** Any possible referent *)
-  type any =
-    [ `Module | `ModuleType | `Type
-    | `Constructor | `Field | `Extension
-    | `Exception | `Value | `Class | `ClassType
-    | `Method | `InstanceVariable | `Label | `Page ]
+    type 'a t =
+      | Root of 'a * UnitName.t
+      | Module of 'a Signature.t * ModuleName.t
+      | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+      | FunctorResult of 'a Signature.t
 
-  (** A referent that can contain signature items *)
-  type signature = [ `Module | `ModuleType ]
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  (** A referent that can contain class signature items *)
-  type class_signature = [ `Class | `ClassType ]
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  (** A referent that can contain datatype items *)
-  type datatype = [ `Type ]
+  end
 
-  (** A referent that can contain page items *)
-  type page = [ `Page ]
+  and ModuleType : sig
 
-  (** A referent that can contain other items *)
-  type parent = [ signature | class_signature | datatype ]
+    type 'a t =
+      | ModuleType of 'a Signature.t * ModuleTypeName.t
 
-  type label_parent = [ parent | page ]
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  (** {4 Identifier kinds}
+    val hash : hash:('a -> int) -> 'a t -> int
 
-      The kind of an identifier directly corresponds to the kind of its
-      referent. *)
+  end
 
-  type identifier = any
+  and Type :sig
 
-  type identifier_module = [ `Module ]
-  type identifier_module_type = [ `ModuleType ]
-  type identifier_type =  [ `Type ]
-  type identifier_constructor = [ `Constructor ]
-  type identifier_field = [ `Field ]
-  type identifier_extension = [ `Extension ]
-  type identifier_exception = [ `Exception ]
-  type identifier_value = [ `Value ]
-  type identifier_class = [ `Class ]
-  type identifier_class_type = [ `ClassType ]
-  type identifier_method = [ `Method ]
-  type identifier_instance_variable = [ `InstanceVariable ]
-  type identifier_label = [ `Label ]
-  type identifier_page = [ `Page ]
+    type 'a t =
+      | Type of 'a Signature.t * TypeName.t
+      | CoreType of TypeName.t
 
-  (** {4 Path kinds}
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Constructor : sig
+
+    type 'a t =
+      | Constructor of 'a Type.t * ConstructorName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Field : sig
+
+    type 'a t =
+      | Field of 'a FieldParent.t * FieldName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Extension : sig
+
+    type 'a t =
+      | Extension of 'a Signature.t * ExtensionName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Exception : sig
+
+    type 'a t =
+      | Exception of 'a Signature.t * ExceptionName.t
+      | CoreException of ExceptionName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Value : sig
+
+    type 'a t =
+      | Value of 'a Signature.t * ValueName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Class : sig
+
+    type 'a t =
+      | Class of 'a Signature.t * ClassName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and ClassType : sig
+
+    type 'a t =
+      | ClassType of 'a Signature.t * ClassTypeName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Method : sig
+
+    type 'a t =
+      | Method of 'a ClassSignature.t * MethodName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and InstanceVariable : sig
+
+    type 'a t =
+      | InstanceVariable of 'a ClassSignature.t * InstanceVariableName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Label : sig
+
+    type 'a t =
+      | Label of 'a LabelParent.t * LabelName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Page : sig
+
+    type 'a t =
+      | Page of 'a * PageName.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and Signature : sig
+
+    type 'a t =
+      | Root of 'a * UnitName.t
+      | Module of 'a Signature.t * ModuleName.t
+      | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+      | FunctorResult of 'a Signature.t
+      | ModuleType of 'a Signature.t * ModuleTypeName.t
+
+    val of_module : 'a Module.t -> 'a t
+
+    val of_module_type : 'a ModuleType.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and ClassSignature : sig
+
+    type 'a t =
+      | Class of 'a Signature.t * ClassName.t
+      | ClassType of 'a Signature.t * ClassTypeName.t
+
+    val of_class : 'a Class.t -> 'a t
+
+    val of_class_type : 'a ClassType.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and FieldParent : sig
+
+    type 'a t =
+      | Type of 'a Signature.t * TypeName.t
+      | CoreType of TypeName.t
+      | Constructor of 'a Type.t * ConstructorName.t
+      | Extension of 'a Signature.t * ExtensionName.t
+      | Exception of 'a Signature.t * ExceptionName.t
+      | CoreException of ExceptionName.t
+
+    val of_type : 'a Type.t -> 'a t
+
+    val of_constructor : 'a Constructor.t -> 'a t
+
+    val of_extension : 'a Extension.t -> 'a t
+
+    val of_exception : 'a Exception.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  and LabelParent : sig
+
+    type 'a t =
+      | Root of 'a * UnitName.t
+      | Module of 'a Signature.t * ModuleName.t
+      | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+      | FunctorResult of 'a Signature.t
+      | ModuleType of 'a Signature.t * ModuleTypeName.t
+      | Class of 'a Signature.t * ClassName.t
+      | ClassType of 'a Signature.t * ClassTypeName.t
+      | Page of 'a * PageName.t
+
+    val of_module : 'a Module.t -> 'a t
+
+    val of_module_type : 'a ModuleType.t -> 'a t
+
+    val of_class : 'a Class.t -> 'a t
+
+    val of_class_type : 'a ClassType.t -> 'a t
+
+    val of_page : 'a Page.t -> 'a t
+
+    val of_signature : 'a Signature.t -> 'a t
+
+    val of_class_signature : 'a ClassSignature.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+  end
+
+  type 'a t =
+    | Root of 'a * UnitName.t
+    | Module of 'a Signature.t * ModuleName.t
+    | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+    | FunctorResult of 'a Signature.t
+    | ModuleType of 'a Signature.t * ModuleTypeName.t
+    | Type of 'a Signature.t * TypeName.t
+    | CoreType of TypeName.t
+    | Constructor of 'a Type.t * ConstructorName.t
+    | Field of 'a FieldParent.t * FieldName.t
+    | Extension of 'a Signature.t * ExtensionName.t
+    | Exception of 'a Signature.t * ExceptionName.t
+    | CoreException of ExceptionName.t
+    | Value of 'a Signature.t * ValueName.t
+    | Class of 'a Signature.t * ClassName.t
+    | ClassType of 'a Signature.t * ClassTypeName.t
+    | Method of 'a ClassSignature.t * MethodName.t
+    | InstanceVariable of 'a ClassSignature.t * InstanceVariableName.t
+    | Label of 'a LabelParent.t * LabelName.t
+    | Page of 'a * PageName.t
+
+  val of_module : 'a Module.t -> 'a t
+
+  val of_module_type : 'a ModuleType.t -> 'a t
+
+  val of_type : 'a Type.t -> 'a t
+
+  val of_constructor : 'a Constructor.t -> 'a t
+
+  val of_field : 'a Field.t -> 'a t
+
+  val of_extension : 'a Extension.t -> 'a t
+
+  val of_exception : 'a Exception.t -> 'a t
+
+  val of_value : 'a Value.t -> 'a t
+
+  val of_class : 'a Class.t -> 'a t
+
+  val of_class_type : 'a ClassType.t -> 'a t
+
+  val of_method : 'a Method.t -> 'a t
+
+  val of_instance_variable : 'a InstanceVariable.t -> 'a t
+
+  val of_label : 'a Label.t -> 'a t
+
+  val of_page : 'a Page.t -> 'a t
+
+  val of_signature : 'a Signature.t -> 'a t
+
+  val of_class_signature : 'a ClassSignature.t -> 'a t
+
+  val of_field_parent : 'a FieldParent.t -> 'a t
+
+  val of_label_parent : 'a LabelParent.t -> 'a t
+
+  val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+  val hash : hash:('a -> int) -> 'a t -> int
+
+  (** Identifiers for paths.
 
       There are four kinds of OCaml path:
 
@@ -95,179 +343,134 @@ module Kind : sig
 
       These kinds do not directly correspond to the kind of their
       referent (e.g. a type path may refer to a class definition). *)
+  module Path : sig
 
-  type path = [ `Module | `ModuleType | `Type | `Class | `ClassType ]
+    type 'a t =
+      | Root of 'a * UnitName.t
+      | Module of 'a Signature.t * ModuleName.t
+      | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+      | FunctorResult of 'a Signature.t
+      | ModuleType of 'a Signature.t * ModuleTypeName.t
+      | Type of 'a Signature.t * TypeName.t
+      | CoreType of TypeName.t
+      | Class of 'a Signature.t * ClassName.t
+      | ClassType of 'a Signature.t * ClassTypeName.t
 
-  type path_module = [ `Module ]
-  type path_module_type = [ `ModuleType ]
-  type path_type = [ `Type | `Class | `ClassType ]
-  type path_class_type = [ `Class | `ClassType ]
+    val of_module : 'a Module.t -> 'a t
 
-  (** {4 Fragment kinds}
+    val of_module_type : 'a ModuleType.t -> 'a t
 
-      There are two kinds of OCaml path fragment:
+    val of_type : 'a Type.t -> 'a t
 
-        - module
-        - type
+    val of_class_type : 'a ClassType.t -> 'a t
 
-      These kinds do not directly correspond to the kind of their
-      referent (e.g. a type path fragment may refer to a class
-      definition). *)
+    module Module : sig
 
-  type fragment = [ `Module | `Type | `Class | `ClassType ]
+      type 'a t =
+        | Root of 'a * UnitName.t
+        | Module of 'a Signature.t * ModuleName.t
+        | FunctorParameter of 'a Signature.t * FunctorParameterName.t
+        | FunctorResult of 'a Signature.t
 
-  type fragment_module = [ `Module ]
-  type fragment_type = [ `Type | `Class | `ClassType ]
+      val of_module : 'a Module.t -> 'a t
 
-  (** {4 Reference kinds}
+    end
 
-      There is one reference kind for each kind of referent. However,
-      the kind of a reference does not refer to the kind of its
-      referent, but to the kind with which the reference was annotated.
+    module ModuleType : sig
 
-      This means that reference kinds do not correspond directly to the
-      kind of their referent because we used more relaxed rules when
-      resolving a reference. For example, a reference annotated as being
-      to a constructor can be resolved to the definition of an exception
-      (which is a sort of constructor). *)
+      type 'a t =
+        | ModuleType of 'a Signature.t * ModuleTypeName.t
 
-  type reference = any
+      val of_module_type : 'a ModuleType.t -> 'a t
 
-  type reference_module = [ `Module ]
-  type reference_module_type = [ `ModuleType ]
-  type reference_type = [ `Type | `Class | `ClassType ]
-  type reference_constructor = [ `Constructor | `Extension | `Exception ]
-  type reference_field = [ `Field ]
-  type reference_extension = [ `Extension | `Exception ]
-  type reference_exception = [ `Exception ]
-  type reference_value = [ `Value ]
-  type reference_class = [ `Class ]
-  type reference_class_type = [ `Class | `ClassType ]
-  type reference_method = [ `Method ]
-  type reference_instance_variable = [ `InstanceVariable ]
-  type reference_label = [ `Label ]
-  type reference_page = [ `Page ]
+    end
+
+    module Type : sig
+
+      type 'a t =
+        | Type of 'a Signature.t * TypeName.t
+        | CoreType of TypeName.t
+        | Class of 'a Signature.t * ClassName.t
+        | ClassType of 'a Signature.t * ClassTypeName.t
+
+      val of_type : 'a Type.t -> 'a t
+
+      val of_class : 'a Class.t -> 'a t
+
+      val of_class_type : 'a ClassType.t -> 'a t
+
+    end
+
+    module ClassType : sig
+
+      type 'a t =
+        | Class of 'a Signature.t * ClassName.t
+        | ClassType of 'a Signature.t * ClassTypeName.t
+
+      val of_class : 'a Class.t -> 'a t
+
+      val of_class_type : 'a ClassType.t -> 'a t
+
+    end
+
+    val of_path_module : 'a Module.t -> 'a t
+
+    val of_path_module_type : 'a ModuleType.t -> 'a t
+
+    val of_path_type : 'a Type.t -> 'a t
+
+    val of_path_class_type : 'a ClassType.t -> 'a t
+
+  end
+
+  val of_path_module : 'a Path.Module.t -> 'a t
+
+  val of_path_module_type : 'a Path.ModuleType.t -> 'a t
+
+  val of_path_type : 'a Path.Type.t -> 'a t
+
+  val of_path : 'a Path.t -> 'a t
 
 end
 
-open Kind
+(** Simple OCaml (module) paths -- no functor applications. *)
+module rec Simple : sig
 
-(** Identifiers for definitions *)
-module Identifier : sig
+  module Resolved : sig
 
-  type kind = Kind.identifier
+    module Module : sig
 
-  type ('a, 'b) t =
-    | Root : 'a * string -> ('a, [< kind > `Module]) t
-    | Page : 'a * string -> ('a, [< kind > `Page]) t
-    | Module : 'a signature * string -> ('a, [< kind > `Module]) t
-    | Argument : 'a signature * int * string -> ('a, [< kind > `Module]) t
-    | ModuleType : 'a signature * string -> ('a, [< kind > `ModuleType]) t
-    | Type : 'a signature * string -> ('a, [< kind > `Type]) t
-    | CoreType : string -> ('a, [< kind > `Type]) t
-    | Constructor : 'a datatype * string -> ('a, [< kind > `Constructor]) t
-    | Field : 'a parent * string -> ('a, [< kind > `Field]) t
-    | Extension : 'a signature * string -> ('a, [< kind > `Extension]) t
-    | Exception : 'a signature * string -> ('a, [< kind > `Exception]) t
-    | CoreException : string -> ('a, [< kind > `Exception]) t
-    | Value : 'a signature * string -> ('a, [< kind > `Value]) t
-    | Class : 'a signature * string -> ('a, [< kind > `Class]) t
-    | ClassType : 'a signature * string -> ('a, [< kind > `ClassType]) t
-    | Method : 'a class_signature * string -> ('a, [< kind > `Method]) t
-    | InstanceVariable : 'a class_signature * string ->
-                           ('a, [< kind > `InstanceVariable]) t
-    | Label : 'a label_parent * string -> ('a, [< kind > `Label]) t
+      type 'a t =
+        | Identifier of 'a Identifier.Module.t
+        | Module of 'a t * ModuleName.t
+        | Alias of 'a Simple.Module.t * 'a t
+        | Hidden of 'a t
+        | Canonical of 'a Simple.Module.t * 'a t
 
-  and 'a any = ('a, kind) t
-  and 'a signature = ('a, Kind.signature) t
-  and 'a class_signature = ('a, Kind.class_signature) t
-  and 'a datatype = ('a, Kind.datatype) t
-  and 'a parent = ('a, Kind.parent) t
-  and 'a label_parent = ('a, Kind.label_parent) t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  type 'a module_ = ('a, identifier_module) t
-  type 'a module_type = ('a, identifier_module_type) t
-  type 'a type_ =  ('a, identifier_type) t
-  type 'a constructor = ('a, identifier_constructor) t
-  type 'a field = ('a, identifier_field) t
-  type 'a extension = ('a, identifier_extension) t
-  type 'a exception_ = ('a, identifier_exception) t
-  type 'a value = ('a, identifier_value) t
-  type 'a class_ = ('a, identifier_class) t
-  type 'a class_type = ('a, identifier_class_type) t
-  type 'a method_ = ('a, identifier_method) t
-  type 'a instance_variable = ('a, identifier_instance_variable) t
-  type 'a label = ('a, identifier_label) t
-  type 'a page = ('a, identifier_page) t
+      val hash : hash:('a -> int) -> 'a t -> int
 
-  type 'a path_module = ('a, Kind.path_module) t
-  type 'a path_module_type = ('a, Kind.path_module_type) t
-  type 'a path_type =  ('a, Kind.path_type) t
-  type 'a path_class_type = ('a, Kind.path_class_type) t
+      val identifier : 'a t -> 'a Identifier.Module.t
 
-  type 'a fragment_module = ('a, Kind.fragment_module) t
-  type 'a fragment_type =  ('a, Kind.fragment_type) t
+    end
 
-  type 'a reference_module = ('a, Kind.reference_module) t
-  type 'a reference_module_type = ('a, Kind.reference_module_type) t
-  type 'a reference_type =  ('a, Kind.reference_type) t
-  type 'a reference_constructor = ('a, Kind.reference_constructor) t
-  type 'a reference_field = ('a, Kind.reference_field) t
-  type 'a reference_extension = ('a, Kind.reference_extension) t
-  type 'a reference_exception = ('a, Kind.reference_exception) t
-  type 'a reference_value = ('a, Kind.reference_value) t
-  type 'a reference_class = ('a, Kind.reference_class) t
-  type 'a reference_class_type = ('a, Kind.reference_class_type) t
-  type 'a reference_method = ('a, Kind.reference_method) t
-  type 'a reference_instance_variable = ('a, Kind.reference_instance_variable) t
-  type 'a reference_label = ('a, Kind.reference_label) t
-  type 'a reference_page = ('a, Kind.reference_page) t
+  end
 
-  (** {2 Explicit coercions} *)
+  module Module : sig
 
-  val signature_of_module : 'a module_ -> 'a signature
+    type 'a t =
+      | Resolved of 'a Resolved.Module.t
+      | Root of string
+      | Forward of string
+      | Dot of 'a t * string
 
-  val signature_of_module_type : 'a module_type -> 'a signature
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  val class_signature_of_class : 'a class_ -> 'a class_signature
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val class_signature_of_class_type : 'a class_type -> 'a class_signature
+  end
 
-  val datatype_of_type : 'a type_ -> 'a datatype
-
-  val parent_of_signature : 'a signature -> 'a parent
-
-  val parent_of_class_signature : 'a class_signature -> 'a parent
-
-  val parent_of_datatype : 'a datatype -> 'a parent
-
-  val label_parent_of_parent : 'a parent -> 'a label_parent
-
-  val label_parent_of_page : 'a page -> 'a label_parent
-
-  val any : ('a, 'b) t -> 'a any
-
-  (** {2 Generic operations} *)
-
-  val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
-
-  val hash : hash:('a -> int) -> ('a, 'b) t -> int
-
-  (** {3 Printing} *)
-
-  val name : ('a, 'b) t -> string
-
-  val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
-
-  (** {2 Root retrieval} *)
-
-  val signature_root : 'a signature -> 'a
-
-  val module_root : 'a module_ -> 'a
-
-  val module_type_root : 'a module_type -> 'a
-
-  val class_signature_root : 'a class_signature -> 'a
 end
 
 (** Normal OCaml paths (i.e. the ones present in types) *)
@@ -275,494 +478,524 @@ module rec Path : sig
 
   module Resolved : sig
 
-    type kind = Kind.path
+    module rec Module : sig
 
-    type ('a, 'b) t =
-      | Identifier : ('a, 'b) Identifier.t -> ('a, [< kind] as 'b) t
-      | Subst : 'a module_type * 'a module_ -> ('a, [< kind > `Module]) t
-      | SubstAlias : 'a module_ * 'a module_ -> ('a, [< kind > `Module]) t
-      | Hidden : 'a module_ -> ('a, [< kind > `Module ]) t
-      | Module : 'a module_ * string -> ('a, [< kind > `Module]) t
-        (* TODO: The canonical path should be a reference not a path *)
-      | Canonical : 'a module_ * 'a Path.module_ -> ('a, [< kind > `Module]) t
-      | Apply : 'a module_ * 'a Path.module_ -> ('a, [< kind > `Module]) t
-      | ModuleType : 'a module_ * string -> ('a, [< kind > `ModuleType]) t
-      | Type : 'a module_ * string -> ('a, [< kind > `Type]) t
-      | Class : 'a module_ * string -> ('a, [< kind > `Class]) t
-      | ClassType : 'a module_ * string -> ('a, [< kind > `ClassType]) t
+      type 'a t =
+        | Identifier of 'a Identifier.Path.Module.t
+          (** Module identifier *)
+        | Module of 'a t * ModuleName.t
+          (** Module projection *)
+        | Apply of 'a t * 'a Path.Module.t
+          (** Functor application. The argument may not be resolved. *)
+        | Subst of 'a ModuleType.t * 'a t
+          (** Substitution of a module type from a functor argument.  The right-hand-side
+              is the original path, which should always be used for printing. When
+              locating the identifier for this module the right-hand-side should still be
+              used, however when locating the identifier for a projection from this module
+              the left-hand-side must be used instead. *)
+        | SubstAlias of 'a t * 'a t
+          (** Substitution of a module from a functor argument.  The right-hand-side is
+              the original path, which should always be used for printing. When locating
+              the identifier for this module the right-hand-side should still be used,
+              however when locating the identifier for a projection from this module the
+              left-hand-side must be used instead. *)
+        | Alias of 'a Simple.Module.t * 'a t
+          (** Substitution of a module alias.  The right-hand-side is the original path,
+              which should be used for printing, whilst the left-hand-side is the module
+              type path that should be used when locating identifiers. However, if the
+              left-hand-side cannot be resolved or is hidden the right-hand-side should
+              be used in its place. *)
+        | Hidden of 'a t
+          (** A hidden path. *)
+        | Canonical of 'a Simple.Module.t * 'a t
+          (** Replacement by a canonical module path. The right-hand-side is the original
+              path, and the left-hand-side is a reference to a module that should replace
+              it. However, if the reference cannot be resolved the right-hand-side should
+              be used instead. Note that if the canonical reference is to the current
+              location (e.g. the definition of [Foo] is an alias whose canonical reference
+              is to [Foo]) then this path should be treated as hidden. *)
 
-    and 'a any = ('a, kind) t
-    and 'a module_ = ('a, path_module) t
-    and 'a module_type = ('a, path_module_type) t
-    and 'a type_ = ('a, path_type) t
-    and 'a class_type = ('a, path_class_type) t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    (** {2 Creators} *)
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val ident_module : 'a Identifier.module_ -> ('a, [< kind > `Module]) t
+      val identifier : 'a t -> 'a Identifier.Path.Module.t
 
-    val ident_module_type : 'a Identifier.module_type ->
-          ('a, [< kind > `ModuleType]) t
+    end
 
-    val ident_type : 'a Identifier.type_ -> ('a, [< kind > `Type]) t
+    and ModuleType : sig
 
-    val ident_class : 'a Identifier.class_ -> ('a, [< kind > `Class]) t
+      type 'a t =
+        | Identifier of 'a Identifier.Path.ModuleType.t
+        | ModuleType of 'a Module.t * ModuleTypeName.t
 
-    val ident_class_type : 'a Identifier.class_type ->
-          ('a, [< kind > `ClassType]) t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    (** {2 Explicit coercion} *)
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val any : ('a, 'b) t -> 'a any
+      val identifier : 'a t -> 'a Identifier.Path.ModuleType.t
 
-    (** {2 Generic operations} *)
+    end
 
-    val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+    and Type : sig
 
-    val hash : hash:('a -> int) -> ('a, 'b) t -> int
+      type 'a t =
+        | Identifier of 'a Identifier.Path.Type.t
+        | Type of 'a Module.t * TypeName.t
+        | Class of 'a Module.t * ClassName.t
+        | ClassType of 'a Module.t * ClassTypeName.t
 
-    val identifier: ('a, 'b) t -> ('a, 'b) Identifier.t
-    (** [identifier rp] extracts the identifier present at the "root" of [rp]. *)
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    val is_hidden : ('a, 'b) t -> bool
-    (** [is_hidden rp] is [true] when some prefix of [rp] (which is not under a
-        [Canonical]) is the [Hidden] constructor.
+      val hash : hash:('a -> int) -> 'a t -> int
 
-        [Canonical] are treated specialy because we expect them to rewrite a
-        hidden path to a non-hidden one. *)
+      val identifier : 'a t -> 'a Identifier.Path.Type.t
 
-    val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
+    end
 
-    val rebase : 'a Identifier.signature -> ('a, 'b) t -> ('a, 'b) t
+    and ClassType : sig
 
-    val equal_identifier : equal:('a -> 'a -> bool) -> ('a, 'b) Identifier.t ->
-      ('a, 'b) t -> bool
+      type 'a t =
+        | Identifier of 'a Identifier.Path.ClassType.t
+        | Class of 'a Module.t * ClassName.t
+        | ClassType of 'a Module.t * ClassTypeName.t
+
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+      val hash : hash:('a -> int) -> 'a t -> int
+
+      val identifier : 'a t -> 'a Identifier.Path.ClassType.t
+
+    end
+
+    type 'a t =
+      | Identifier of 'a Identifier.Path.t
+      | Module of 'a Module.t * ModuleName.t
+      | Apply of 'a Module.t * 'a Path.Module.t
+      | Subst of 'a ModuleType.t * 'a Module.t
+      | SubstAlias of 'a Module.t * 'a Module.t
+      | Alias of 'a Simple.Module.t * 'a Module.t
+      | Hidden of 'a Module.t
+      | Canonical of 'a Simple.Module.t * 'a Module.t
+      | ModuleType of 'a Module.t * ModuleTypeName.t
+      | Type of 'a Module.t * TypeName.t
+      | Class of 'a Module.t * ClassName.t
+      | ClassType of 'a Module.t * ClassTypeName.t
+
+    val of_module : 'a Module.t -> 'a t
+
+    val of_module_type : 'a ModuleType.t -> 'a t
+
+    val of_type : 'a Type.t -> 'a t
+
+    val of_class_type : 'a ClassType.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+    val identifier : 'a t -> 'a Identifier.Path.t
+
   end
 
-  type kind = Kind.path
+  module rec Module : sig
 
-  type ('a, 'b) t =
-    | Resolved : ('a, 'b) Resolved.t -> ('a, 'b) t
-    | Root : string -> ('a, [< kind > `Module]) t
-    | Forward : string -> ('a, [< kind > `Module]) t
-    | Dot : 'a module_ * string -> ('a, [< kind]) t
-    | Apply : 'a module_ * 'a module_ -> ('a, [< kind > `Module]) t
+    type 'a t =
+      | Resolved of 'a Resolved.Module.t
+      | Root of string
+      | Forward of string
+      | Dot of 'a t * string
+      | Apply of 'a t * 'a t
 
-  and 'a any = ('a, kind) t
-  and 'a module_ = ('a, path_module) t
-  and 'a module_type = ('a, path_module_type) t
-  and 'a type_ = ('a, path_type) t
-  and 'a class_type = ('a, path_class_type) t
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  (** {2 Creators} *)
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val ident_module : 'a Identifier.module_ -> ('a, [< kind > `Module]) t
+  end
 
-  val ident_module_type : 'a Identifier.module_type ->
-        ('a, [< kind > `ModuleType]) t
+  and ModuleType : sig
 
-  val ident_type : 'a Identifier.type_ -> ('a, [< kind > `Type]) t
+    type 'a t =
+      | Resolved of 'a Resolved.ModuleType.t
+      | Dot of 'a Module.t * string
 
-  val ident_class : 'a Identifier.class_ -> ('a, [< kind > `Class]) t
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  val ident_class_type : 'a Identifier.class_type ->
-        ('a, [< kind > `ClassType]) t
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val module_ : 'a module_ -> string -> ('a, [< kind > `Module]) t
+  end
 
-  val apply : 'a module_ -> 'a module_ -> ('a, [< kind > `Module]) t
+  and Type : sig
 
-  val module_type : 'a module_ -> string -> ('a, [< kind > `ModuleType]) t
+    type 'a t =
+      | Resolved of 'a Resolved.Type.t
+      | Dot of 'a Module.t * string
 
-  val type_ : 'a module_ -> string -> ('a, [< kind > `Type]) t
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  val class_ : 'a module_ -> string -> ('a, [< kind > `Class]) t
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val class_type_ : 'a module_ -> string -> ('a, [< kind > `ClassType]) t
+  end
 
-  (** {2 Explicit coercions} *)
+  and ClassType : sig
 
-  val any : ('a, 'b) t -> 'a any
+    type 'a t =
+      | Resolved of 'a Resolved.ClassType.t
+      | Dot of 'a Module.t * string
 
-  val type_of_class_type : 'a class_type -> 'a type_
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  (** {2 Generic operations} *)
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+  end
 
-  val hash : hash:('a -> int) -> ('a, 'b) t -> int
+  type 'a t =
+    | Resolved of 'a Resolved.t
+    | Root of string
+    | Forward of string
+    | Dot of 'a Module.t * string
+    | Apply of 'a Module.t * 'a Module.t
 
-  val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
+    val of_module : 'a Module.t -> 'a t
 
-  val is_hidden : ('a, 'b) t -> bool
-  (** cf. {!Resolved.is_hidden} *)
+    val of_module_type : 'a ModuleType.t -> 'a t
+
+    val of_type : 'a Type.t -> 'a t
+
+    val of_class_type : 'a ClassType.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
 end
+
 
 (** OCaml path fragments for specifying module substitutions *)
 module Fragment : sig
 
   module Resolved : sig
 
-    type kind = Kind.fragment
+    module rec Module : sig
 
-    type sort = [ `Root | `Branch ]
+      type 'a t =
+        | Module of 'a Signature.t * ModuleName.t
+        | Subst of 'a Path.Resolved.ModuleType.t * 'a t
+        | SubstAlias of 'a Path.Resolved.Module.t * 'a t
+        | Alias of 'a Simple.Module.t * 'a t
+        | Hidden of 'a t
 
-    type ('a, 'b, 'c) raw =
-      | Root : ('a, 'b, [< sort > `Root]) raw
-      | Subst : 'a Path.Resolved.module_type * 'a module_ ->
-                ('a, [< kind > `Module] as 'b, [< sort > `Branch] as 'c) raw
-      | SubstAlias : 'a Path.Resolved.module_ * 'a module_ ->
-                ('a, [< kind > `Module] as 'b, [< sort > `Branch] as 'c) raw
-      | Module : 'a signature * string -> ('a, [< kind > `Module], [< sort > `Branch]) raw
-      | Type : 'a signature * string -> ('a, [< kind > `Type], [< sort > `Branch]) raw
-      | Class : 'a signature * string -> ('a, [< kind > `Class], [< sort > `Branch]) raw
-      | ClassType : 'a signature * string -> ('a, [< kind > `ClassType], [< sort > `Branch]) raw
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    and ('a, 'b) t = ('a, 'b, [`Branch]) raw
-    and 'a any = ('a, kind) t
-    and 'a signature = ('a, fragment_module, [`Root | `Branch]) raw
-    and 'a module_ = ('a, fragment_module) t
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    type 'a type_ = ('a, fragment_type) t
+      val identifier :
+        'a Identifier.Signature.t -> 'a t -> 'a Identifier.Path.Module.t
 
-    (** {2 Explicit coercions} *)
+    end
 
-    val signature_of_module : 'a module_ -> 'a signature
+    and Type : sig
 
-    val any : ('a, 'b) t -> 'a any
+      type 'a t =
+        | Type of 'a Signature.t * TypeName.t
+        | Class of 'a Signature.t * ClassName.t
+        | ClassType of 'a Signature.t * ClassTypeName.t
 
-    val any_sort : ('a, 'b, 'c) raw -> ('a, 'b, sort) raw
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    (** {2 Attaching fragments to valid paths} *)
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val path: 'a Path.module_ -> ('a, 'b) t -> ('a, 'b) Path.t
+      val identifier :
+        'a Identifier.Signature.t -> 'a t -> 'a Identifier.Path.Type.t
 
-    val identifier: 'a Identifier.signature -> ('a, 'b) t ->
-                    ('a, 'b) Identifier.t
+    end
 
-    (** {2 Generic operations} *)
+    and Signature : sig
 
-    val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+      type 'a t =
+        | Base
+        | Module of 'a t * ModuleName.t
+        | Subst of 'a Path.Resolved.ModuleType.t * 'a Module.t
+        | SubstAlias of 'a Path.Resolved.Module.t * 'a Module.t
+        | Alias of 'a Simple.Module.t * 'a Module.t
+        | Hidden of 'a Module.t
 
-    val hash : hash:('a -> int) -> ('a, 'b) t -> int
+      val of_module : 'a Module.t -> 'a t
 
-    val sexp_of_t : ('a -> sexp) -> ('a, _, _) raw -> sexp
+      val identifier :
+        'a Identifier.Signature.t -> 'a t -> 'a Identifier.Signature.t
 
-    val split : ('a, 'b) t -> string * ('a, 'b) t option
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+      val hash : hash:('a -> int) -> 'a t -> int
+
+    end
+
+    type 'a t =
+      | Base
+      | Module of 'a Signature.t * ModuleName.t
+      | Subst of 'a Path.Resolved.ModuleType.t * 'a Module.t
+      | SubstAlias of 'a Path.Resolved.Module.t * 'a Module.t
+      | Alias of 'a Simple.Module.t * 'a Module.t
+      | Hidden of 'a Module.t
+      | Type of 'a Signature.t * TypeName.t
+      | Class of 'a Signature.t * ClassName.t
+      | ClassType of 'a Signature.t * ClassTypeName.t
+
+    val of_module : 'a Module.t -> 'a t
+
+    val of_type : 'a Type.t -> 'a t
+
+    val of_signature : 'a Signature.t -> 'a t
+
+    val identifier :
+      'a Identifier.Signature.t -> 'a t -> 'a Identifier.t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
 
   end
 
-  type kind = Kind.fragment
+  module rec Module : sig
 
-  type sort = [ `Root | `Branch ]
+    type 'a t =
+      | Resolved of 'a Resolved.Module.t
+      | Dot of 'a Signature.t * string
 
-  type ('a, 'b, 'c) raw =
-    | Resolved : ('a, 'b, 'c) Resolved.raw -> ('a, 'b, 'c) raw
-    | Dot : 'a signature * string -> ('a, [< kind], [< sort > `Branch]) raw
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  and ('a, 'b) t = ('a, 'b, [`Branch]) raw
-  and 'a any = ('a, kind) t
-  and 'a signature = ('a, fragment_module, [`Root | `Branch]) raw
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  type 'a module_ = ('a, fragment_module) t
-  type 'a type_ = ('a, fragment_type) t
+  end
 
-  (** {2 Explicit coercions} *)
+  and Type : sig
 
-  val signature_of_module : 'a module_ -> 'a signature
+    type 'a t =
+      | Resolved of 'a Resolved.Type.t
+      | Dot of 'a Signature.t * string
 
-  val any_sort : ('a, 'b, 'c) raw -> ('a, 'b, sort) raw
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  val any : ('a, 'b) t -> 'a any
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  (** {2 Attaching fragments to valid paths} *)
+  end
 
-  val path: 'a Path.module_ -> ('a, 'b) t -> ('a, 'b) Path.t
+  and Signature : sig
 
-  (** {2 Generic operations} *)
+    type 'a t =
+      | Resolved of 'a Resolved.Signature.t
+      | Dot of 'a t * string
 
-  val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+    val of_module : 'a Module.t -> 'a t
 
-  val hash : hash:('a -> int) -> ('a, 'b) t -> int
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  val sexp_of_t : ('a -> sexp) -> ('a, _, _) raw -> sexp
+    val hash : hash:('a -> int) -> 'a t -> int
 
-  val split: ('a, 'b) t -> string * ('a, 'b) t option
+  end
+
+  type 'a t =
+    | Resolved of 'a Resolved.t
+    | Dot of 'a Signature.t * string
+
+  val of_module : 'a Module.t -> 'a t
+
+  val of_type : 'a Type.t -> 'a t
+
+  val of_signature : 'a Signature.t -> 'a t
+
+  val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+  val hash : hash:('a -> int) -> 'a t -> int
 
 end
 
 (** References present in documentation comments ([{!Foo.Bar}]) *)
-module rec Reference : sig
+module Reference : sig
 
   module Resolved : sig
 
-    type kind = Kind.reference
+    module rec Module : sig
 
-    type ('a, 'b) t =
-      | Identifier : ('a, 'b) Identifier.t -> ('a, 'b) t
-      | SubstAlias : 'a Path.Resolved.module_ * 'a module_ -> ('a, [< kind > `Module ]) t
-      | Module : 'a signature * string -> ('a, [< kind > `Module]) t
-      | Canonical : 'a module_ * 'a Reference.module_ -> ('a, [< kind > `Module]) t
-      | ModuleType : 'a signature * string -> ('a, [< kind > `ModuleType]) t
-      | Type : 'a signature * string -> ('a, [< kind > `Type]) t
-      | Constructor : 'a datatype * string -> ('a, [< kind > `Constructor]) t
-      | Field : 'a parent * string -> ('a, [< kind > `Field]) t
-      | Extension : 'a signature * string -> ('a, [< kind > `Extension]) t
-      | Exception : 'a signature * string -> ('a, [< kind > `Exception]) t
-      | Value : 'a signature * string -> ('a, [< kind > `Value]) t
-      | Class : 'a signature * string -> ('a, [< kind > `Class]) t
-      | ClassType : 'a signature * string -> ('a, [< kind > `ClassType]) t
-      | Method : 'a class_signature * string -> ('a, [< kind > `Method]) t
-      | InstanceVariable : 'a class_signature * string ->
-                             ('a, [< kind > `InstanceVariable]) t
-      | Label : 'a label_parent * string -> ('a, [< kind > `Label]) t
+      type 'a t =
+        | Identifier of 'a Identifier.Module.t
+        | Module of 'a Signature.t * ModuleName.t
+        | Alias of 'a Simple.Module.t * 'a t
+        | Hidden of 'a t
+        | Canonical of 'a Simple.Module.t * 'a t
 
-    and 'a any = ('a, kind) t
-    and 'a signature = ('a, Kind.signature) t
-    and 'a class_signature = ('a, Kind.class_signature) t
-    and 'a datatype = ('a, Kind.datatype) t
-    and 'a parent = ('a, Kind.parent) t
-    and 'a module_ = ('a, reference_module) t
-    and 'a label_parent = ('a, Kind.label_parent) t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    type 'a module_type = ('a, reference_module_type) t
-    type 'a type_ = ('a, reference_type) t
-    type 'a constructor = ('a, reference_constructor) t
-    type 'a field = ('a, reference_field) t
-    type 'a extension = ('a, reference_extension) t
-    type 'a exception_ = ('a, reference_exception) t
-    type 'a value = ('a, reference_value) t
-    type 'a class_ = ('a, reference_class) t
-    type 'a class_type = ('a, reference_class_type) t
-    type 'a method_ = ('a, reference_method) t
-    type 'a instance_variable = ('a, reference_instance_variable) t
-    type 'a label = ('a, reference_label) t
-    type 'a page = ('a, reference_page) t
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    (** {2 Creators} *)
+      val identifier : 'a t -> 'a Identifier.Module.t
 
-    val ident_module : 'a Identifier.module_ -> ('a, [< kind > `Module]) t
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
-    val ident_module_type : 'a Identifier.module_type ->
-          ('a, [< kind > `ModuleType]) t
+    end
 
-    val ident_type : 'a Identifier.type_ -> ('a, [< kind > `Type])t
+    and Type : sig
 
-    val ident_constructor : 'a Identifier.constructor ->
-          ('a, [< kind > `Constructor])t
+      type 'a t =
+        | Identifier of 'a Identifier.Type.t
+        | Type of 'a Signature.t * TypeName.t
 
-    val ident_field : 'a Identifier.field -> ('a, [< kind > `Field])t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    val ident_extension : 'a Identifier.extension ->
-          ('a, [< kind > `Extension])t
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val ident_exception : 'a Identifier.exception_ ->
-          ('a, [< kind > `Exception])t
+      val identifier : 'a t -> 'a Identifier.Type.t
 
-    val ident_value : 'a Identifier.value -> ('a, [< kind > `Value])t
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
-    val ident_class : 'a Identifier.class_ -> ('a, [< kind > `Class])t
+    end
 
-    val ident_class_type : 'a Identifier.class_type ->
-          ('a, [< kind > `ClassType])t
+    and Signature : sig
 
-    val ident_method : 'a Identifier.method_ -> ('a, [< kind > `Method])t
+      type 'a t =
+        | Identifier of 'a Identifier.Signature.t
+        | Module of 'a t * ModuleName.t
+        | Alias of 'a Simple.Module.t * 'a Module.t
+        | Hidden of 'a Module.t
+        | Canonical of 'a Simple.Module.t * 'a Module.t
+        | ModuleType of 'a t * ModuleTypeName.t
 
-    val ident_instance_variable : 'a Identifier.instance_variable ->
-          ('a, [< kind > `InstanceVariable])t
+      val of_module : 'a Module.t -> 'a t
 
-    val ident_label : 'a Identifier.label -> ('a, [< kind > `Label]) t
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    val ident_page : 'a Identifier.page -> ('a, [< kind > `Page]) t
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    (** {2 Explicit coercions} *)
+      val identifier : 'a t -> 'a Identifier.Signature.t
 
-    val signature_of_module : 'a module_ -> 'a signature
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
-    val signature_of_module_type : 'a module_type -> 'a signature
+    end
 
-    val class_signature_of_class : 'a class_ -> 'a class_signature
+    and ClassSignature : sig
 
-    val class_signature_of_class_type : 'a class_type -> 'a class_signature
+      type 'a t =
+        | Identifier of 'a Identifier.ClassSignature.t
+        | Class of 'a Signature.t * ClassName.t
+        | ClassType of 'a Signature.t * ClassTypeName.t
 
-    val parent_of_signature : 'a signature -> 'a parent
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    val parent_of_class_signature : 'a class_signature -> 'a parent
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val parent_of_datatype : 'a datatype -> 'a parent
+      val identifier : 'a t -> 'a Identifier.ClassSignature.t
 
-    val label_parent_of_parent : 'a parent -> 'a label_parent
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
-    val label_parent_of_page : 'a page -> 'a label_parent
+    end
 
-    val any : ('a, 'b) t -> 'a any
+    and FieldParent : sig
 
-    (** {2 Generic operations} *)
+      type 'a t =
+        | Identifier of 'a Identifier.FieldParent.t
+        | Type of 'a Signature.t * TypeName.t
+        | Constructor of 'a Type.t * ConstructorName.t
+        | Extension of 'a Signature.t * ExtensionName.t
+        | Exception of 'a Signature.t * ExceptionName.t
 
-    val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-    val hash : hash:('a -> int) -> ('a, 'b) t -> int
+      val hash : hash:('a -> int) -> 'a t -> int
 
-    val identifier: ('a, 'b) t -> ('a, 'b) Identifier.t
-    (** [identifier rr] extracts the identifier present at the "root" of [rr]. *)
+      val identifier : 'a t -> 'a Identifier.FieldParent.t
 
-    val rebase : 'a Identifier.signature -> ('a, 'b) t -> ('a, 'b) t
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
-    val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
+    end
+
+    and LabelParent : sig
+
+      type 'a t =
+        | Identifier of 'a Identifier.LabelParent.t
+        | Module of 'a Signature.t * ModuleName.t
+        | Alias of 'a Simple.Module.t * 'a Module.t
+        | Hidden of 'a Module.t
+        | Canonical of 'a Simple.Module.t * 'a Module.t
+        | ModuleType of 'a Signature.t * ModuleTypeName.t
+        | Class of 'a Signature.t * ClassName.t
+        | ClassType of 'a Signature.t * ClassTypeName.t
+
+      val of_signature : 'a Signature.t -> 'a t
+
+      val of_class_signature : 'a ClassSignature.t -> 'a t
+
+      val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+      val hash : hash:('a -> int) -> 'a t -> int
+
+      val identifier : 'a t -> 'a Identifier.LabelParent.t
+
+      val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
+
+    end
+
+    type 'a t =
+      | Identifier of 'a Identifier.t
+      | Module of 'a Signature.t * ModuleName.t
+      | Alias of 'a Simple.Module.t * 'a Module.t
+      | Hidden of 'a Module.t
+      | Canonical of 'a Simple.Module.t * 'a Module.t
+      | ModuleType of 'a Signature.t * ModuleTypeName.t
+      | Type of 'a Signature.t * TypeName.t
+      | Constructor of 'a Type.t * ConstructorName.t
+      | Field of 'a FieldParent.t * FieldName.t
+      | Extension of 'a Signature.t * ExtensionName.t
+      | Exception of 'a Signature.t * ExceptionName.t
+      | Value of 'a Signature.t * ValueName.t
+      | Class of 'a Signature.t * ClassName.t
+      | ClassType of 'a Signature.t * ClassTypeName.t
+      | Method of 'a ClassSignature.t * MethodName.t
+      | InstanceVariable of 'a ClassSignature.t * InstanceVariableName.t
+      | Label of 'a LabelParent.t * LabelName.t
+
+    val of_module : 'a Module.t -> 'a t
+
+    val of_type : 'a Type.t -> 'a t
+
+    val of_signature : 'a Signature.t -> 'a t
+
+    val of_class_signature : 'a ClassSignature.t -> 'a t
+
+    val of_field_parent : 'a FieldParent.t -> 'a t
+
+    val of_label_parent : 'a LabelParent.t -> 'a t
+
+    val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
+
+    val hash : hash:('a -> int) -> 'a t -> int
+
+    val identifier : 'a t -> 'a Identifier.t
+
+    val rebase : 'a Identifier.Signature.t -> 'a t -> 'a t
 
   end
 
-  type kind = Kind.reference
+  type 'a t =
+    | Resolved of 'a Resolved.t
+    | Module of 'a t option * string
+    | ModuleType of 'a t option * string
+    | Type of 'a t option * string
+    | Constructor of 'a t option * string
+    | Field of 'a t option * string
+    | Extension of 'a t option * string
+    | Exception of 'a t option * string
+    | Value of 'a t option * string
+    | Class of 'a t option * string
+    | ClassType of 'a t option * string
+    | Method of 'a t option * string
+    | InstanceVariable of 'a t option * string
+    | Label of 'a t option * string
+    | Page of 'a t option * string
+    | Unknown of 'a t option * string
 
-  type _ tag =
-    | TUnknown : [< kind ] tag
-    | TModule : [< kind > `Module ] tag
-    | TModuleType : [< kind > `ModuleType ] tag
-    | TType : [< kind > `Type ] tag
-    | TConstructor : [< kind > `Constructor ] tag
-    | TField : [< kind > `Field ] tag
-    | TExtension : [< kind > `Extension ] tag
-    | TException : [< kind > `Exception ] tag
-    | TValue : [< kind > `Value ] tag
-    | TClass : [< kind > `Class ] tag
-    | TClassType : [< kind > `ClassType ] tag
-    | TMethod : [< kind > `Method ] tag
-    | TInstanceVariable : [< kind > `InstanceVariable ] tag
-    | TLabel : [< kind > `Label ] tag
-    | TPage : [< kind > `Page ] tag
+  val equal : equal:('a -> 'a -> bool) -> 'a t -> 'a t -> bool
 
-  type ('a, 'b) t =
-    | Resolved : ('a, 'b) Resolved.t -> ('a, 'b) t
-    | Root : string * 'b tag -> ('a, 'b) t
-    | Dot : 'a label_parent * string -> ('a, [< kind ] as 'b) t
-    | Module : 'a signature * string -> ('a, [< kind > `Module]) t
-    | ModuleType : 'a signature * string -> ('a, [< kind > `ModuleType]) t
-    | Type : 'a signature * string -> ('a, [< kind > `Type]) t
-    | Constructor : 'a datatype * string -> ('a, [< kind > `Constructor]) t
-    | Field : 'a parent * string -> ('a, [< kind > `Field]) t
-    | Extension : 'a signature * string -> ('a, [< kind > `Extension]) t
-    | Exception : 'a signature * string -> ('a, [< kind > `Exception]) t
-    | Value : 'a signature * string -> ('a, [< kind > `Value]) t
-    | Class : 'a signature * string -> ('a, [< kind > `Class]) t
-    | ClassType : 'a signature * string -> ('a, [< kind > `ClassType]) t
-    | Method : 'a class_signature * string -> ('a, [< kind > `Method]) t
-    | InstanceVariable : 'a class_signature * string ->
-      ('a, [< kind > `InstanceVariable]) t
-    | Label : 'a label_parent * string -> ('a, [< kind > `Label]) t
+  val hash : hash:('a -> int) -> 'a t -> int
 
-  and 'a any = ('a, kind) t
-  and 'a signature = ('a, Kind.signature) t
-  and 'a class_signature = ('a, Kind.class_signature) t
-  and 'a datatype = ('a, Kind.datatype) t
-  and 'a parent = ('a, Kind.parent) t
-  and 'a label_parent = ('a, [ Kind.parent | Kind.page ]) t
-
-  type 'a module_ = ('a, reference_module) t
-  type 'a module_type = ('a, reference_module_type) t
-  type 'a type_ = ('a, reference_type) t
-  type 'a constructor = ('a, reference_constructor) t
-  type 'a field = ('a, reference_field) t
-  type 'a extension = ('a, reference_extension) t
-  type 'a exception_ = ('a, reference_exception) t
-  type 'a value = ('a, reference_value) t
-  type 'a class_ = ('a, reference_class) t
-  type 'a class_type = ('a, reference_class_type) t
-  type 'a method_ = ('a, reference_method) t
-  type 'a instance_variable = ('a, reference_instance_variable) t
-  type 'a label = ('a, reference_label) t
-  type 'a page = ('a, reference_page) t
-
-  (** {2 Creators} *)
-
-  val ident_module : 'a Identifier.module_ -> ('a, [< kind > `Module]) t
-
-  val ident_module_type : 'a Identifier.module_type ->
-        ('a, [< kind > `ModuleType]) t
-
-  val ident_type : 'a Identifier.type_ -> ('a, [< kind > `Type])t
-
-  val ident_constructor : 'a Identifier.constructor ->
-        ('a, [< kind > `Constructor])t
-
-  val ident_field : 'a Identifier.field -> ('a, [< kind > `Field])t
-
-  val ident_extension : 'a Identifier.extension ->
-        ('a, [< kind > `Extension])t
-
-  val ident_exception : 'a Identifier.exception_ ->
-        ('a, [< kind > `Exception])t
-
-  val ident_value : 'a Identifier.value -> ('a, [< kind > `Value])t
-
-  val ident_class : 'a Identifier.class_ -> ('a, [< kind > `Class])t
-
-  val ident_class_type : 'a Identifier.class_type ->
-        ('a, [< kind > `ClassType])t
-
-  val ident_method : 'a Identifier.method_ -> ('a, [< kind > `Method])t
-
-  val ident_instance_variable : 'a Identifier.instance_variable ->
-        ('a, [< kind > `InstanceVariable])t
-
-  val ident_label : 'a Identifier.label -> ('a, [< kind > `Label]) t
-
-  val module_ : 'a signature -> string -> ('a, [< kind > `Module]) t
-
-  val module_type : 'a signature -> string ->
-        ('a, [< kind > `ModuleType]) t
-
-  val type_ : 'a signature -> string -> ('a, [< kind > `Type])t
-
-  val constructor : 'a datatype -> string ->
-        ('a, [< kind > `Constructor])t
-
-  val field : 'a parent -> string -> ('a, [< kind > `Field])t
-
-  val extension : 'a signature -> string ->
-        ('a, [< kind > `Extension])t
-
-  val exception_ : 'a signature -> string ->
-        ('a, [< kind > `Exception])t
-
-  val value : 'a signature -> string -> ('a, [< kind > `Value])t
-
-  val class_ : 'a signature -> string -> ('a, [< kind > `Class])t
-
-  val class_type : 'a signature -> string ->
-        ('a, [< kind > `ClassType])t
-
-  val method_ : 'a class_signature -> string -> ('a, [< kind > `Method])t
-
-  val instance_variable : 'a class_signature -> string ->
-        ('a, [< kind > `InstanceVariable])t
-
-  val label : 'a label_parent -> string -> ('a, [< kind > `Label]) t
-
-  (** {2 Explicit coercions} *)
-
-  val signature_of_module : 'a module_ -> 'a signature
-
-  val signature_of_module_type : 'a module_type -> 'a signature
-
-  val class_signature_of_class : 'a class_ -> 'a class_signature
-
-  val class_signature_of_class_type : 'a class_type -> 'a class_signature
-
-  val parent_of_signature : 'a signature -> 'a parent
-
-  val parent_of_class_signature : 'a class_signature -> 'a parent
-
-  val parent_of_datatype : 'a datatype -> 'a parent
-
-  val label_parent_of_parent : 'a parent -> 'a label_parent
-
-  val any : ('a, 'b) t -> 'a any
-
-  (** {2 Generic operations} *)
-
-  val equal : equal:('a -> 'a -> bool) -> ('a, 'b) t -> ('a, 'b) t -> bool
-
-  val hash : hash:('a -> int) -> ('a, 'b) t -> int
-
-  val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
 end

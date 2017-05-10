@@ -14,9 +14,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-
-val read_interface: 'a -> string -> Types.signature ->
-  'a DocOckPaths.Identifier.module_ *
+val read_interface: 'a -> DocOckNames.UnitName.t -> Types.signature ->
+  'a DocOckPaths.Identifier.Module.t *
   'a DocOckTypes.Documentation.t *
   'a DocOckTypes.Signature.t
 
@@ -43,28 +42,28 @@ val read_type_constraints : 'a DocOckIdentEnv.t -> Types.type_expr list ->
                              * 'a DocOckTypes.TypeExpr.t) list
 
 val read_class_signature : 'a DocOckIdentEnv.t ->
-                           'a DocOckPaths.Identifier.class_signature ->
+                           'a DocOckPaths.Identifier.ClassSignature.t ->
                            Types.type_expr list -> Types.class_type ->
                            'a DocOckTypes.ClassType.expr
 
 val read_class_type : 'a DocOckIdentEnv.t ->
-                      'a DocOckPaths.Identifier.class_signature ->
+                      'a DocOckPaths.Identifier.ClassSignature.t ->
                       Types.type_expr list -> Types.class_type ->
                       'a DocOckTypes.Class.decl
 
 val read_module_type : 'a DocOckIdentEnv.t ->
-                       'a DocOckPaths.Identifier.signature -> int ->
+                       'a DocOckPaths.Identifier.Signature.t ->
                        Types.module_type -> 'a DocOckTypes.ModuleType.expr
 
 val read_signature : 'a DocOckIdentEnv.t ->
-                     'a DocOckPaths.Identifier.signature ->
+                     'a DocOckPaths.Identifier.Signature.t ->
                      Types.signature -> 'a DocOckTypes.Signature.t
 
 val read_extension_constructor : 'a DocOckIdentEnv.t ->
-                       'a DocOckPaths.Identifier.signature ->
+                       'a DocOckPaths.Identifier.Signature.t ->
                        Ident.t -> Types.extension_constructor ->
                        'a DocOckTypes.Extension.Constructor.t
 
 val read_exception : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature -> Ident.t ->
+  'a DocOckPaths.Identifier.Signature.t -> Ident.t ->
   Types.extension_constructor -> 'a DocOckTypes.Exception.t

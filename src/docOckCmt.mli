@@ -14,7 +14,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-val read_implementation: 'a -> string -> Typedtree.structure ->
-  'a DocOckPaths.Identifier.module_ *
+val read_implementation: 'a -> DocOckNames.UnitName.t -> Typedtree.structure ->
+  'a DocOckPaths.Identifier.Module.t *
   'a DocOckTypes.Documentation.t *
   'a DocOckTypes.Signature.t

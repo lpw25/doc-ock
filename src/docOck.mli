@@ -18,11 +18,11 @@
 
 module Attrs = DocOckAttrs
 
-module Maps = DocOckMaps
-
 module Paths = DocOckPaths
 
 module Types = DocOckTypes
+
+module Sexp = DocOckSexp
 
 (**/**)
 
@@ -42,10 +42,6 @@ val read_cmt: (string -> Digest.t -> 'a) -> string -> 'a result
 
 val read_cmi: (string -> Digest.t -> 'a) -> string -> 'a result
 
-(** {2:resolving Resolving}
-
-    This is the part of DocOck handling the resolving of path and references. *)
-
 type 'a resolver
 
 type 'a lookup_result =
@@ -59,24 +55,9 @@ val build_resolver: ?equal:('a -> 'a -> bool) -> ?hash:('a -> int)
   -> (string -> 'a option) -> ('a -> 'a Types.Page.t)
   -> 'a resolver
 
-val resolve: 'a resolver -> 'a Types.Unit.t -> 'a Types.Unit.t
+val compile: 'a resolver -> 'a Types.Unit.t -> 'a Types.Unit.t
 
-val resolve_page : 'a resolver -> 'a Types.Page.t -> 'a Types.Page.t
-
-(** {2:expansion Expansion}
-
-    This is the part of DocOck in charge of performing substitutions, inlining
-    of includes, etc. *)
-
-type 'a expander
-
-(** Build an expander. Assumes that it is safe to use {!Hashtbl.hash} and
-    structural equality (=) on ['a]. *)
-val build_expander: ?equal:('a -> 'a -> bool) -> ?hash:('a -> int) ->
-                    (string -> 'a lookup_result) ->
-                    (root:'a -> 'a -> 'a Types.Unit.t) -> 'a expander
-
-val expand: 'a expander -> 'a Types.Unit.t -> 'a Types.Unit.t
+val link: 'a resolver -> 'a Types.Unit.t -> 'a Types.Unit.t
 
 (** {2 Misc.}
 

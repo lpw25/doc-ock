@@ -19,19 +19,76 @@ open DocOckTypes.Documentation
 
 val empty : 'a t
 
-val read_attributes : 'a Identifier.label_parent -> ('a, 'k) Identifier.t ->
-                        Parsetree.attributes -> 'a t
+val read_module_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Module.t ->
+    Parsetree.attributes -> 'a t
 
-val read_string : 'a Identifier.label_parent -> Location.t -> string -> 'a comment
+val read_module_type_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.ModuleType.t ->
+    Parsetree.attributes -> 'a t
+
+val read_type_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Type.t ->
+    Parsetree.attributes -> 'a t
+
+val read_constructor_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Constructor.t ->
+    Parsetree.attributes -> 'a t
+
+val read_field_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Field.t ->
+    Parsetree.attributes -> 'a t
+
+val read_extension_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Extension.t ->
+    Parsetree.attributes -> 'a t
+
+val read_exception_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Exception.t ->
+    Parsetree.attributes -> 'a t
+
+val read_value_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Value.t ->
+    Parsetree.attributes -> 'a t
+
+val read_class_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.Class.t ->
+    Parsetree.attributes -> 'a t
+
+val read_class_type_attributes :
+  'a Identifier.Signature.t -> 'a Identifier.ClassType.t ->
+    Parsetree.attributes -> 'a t
+
+val read_method_attributes :
+  'a Identifier.ClassSignature.t -> 'a Identifier.Method.t ->
+    Parsetree.attributes -> 'a t
+
+val read_instance_variable_attributes :
+  'a Identifier.ClassSignature.t -> 'a Identifier.InstanceVariable.t ->
+    Parsetree.attributes -> 'a t
+
+val read_signature_attributes :
+  'a Identifier.Signature.t -> Parsetree.attributes -> 'a t
+
+val read_class_signature_attributes :
+  'a Identifier.ClassSignature.t -> Parsetree.attributes -> 'a t
+
+val read_signature_comment :
+  'a Identifier.Signature.t -> Parsetree.attribute -> 'a comment option
+
+val read_class_signature_comment :
+  'a Identifier.ClassSignature.t -> Parsetree.attribute -> 'a comment option
+
+val read_signature_comments :
+  'a Identifier.Signature.t -> Parsetree.attributes -> 'a comment list
+
+val read_class_signature_comments :
+  'a Identifier.ClassSignature.t -> Parsetree.attributes -> 'a comment list
+
+val read_string : 'a Identifier.LabelParent.t -> Location.t -> string -> 'a comment
 (** The parent identifier is used to define labels in the given string (i.e.
     for things like [{1:some_section Some title}]) and the location is used for
     error messages.
 
     This function is meant to be used to read arbitrary files containing text in
     the ocamldoc syntax. *)
-
-val read_comment : 'a Identifier.label_parent ->
-                     Parsetree.attribute -> 'a comment option
-
-val read_comments : 'a Identifier.label_parent ->
-                      Parsetree.attributes -> 'a comment list

@@ -14,52 +14,54 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-open DocOckPaths.Identifier
+module OCamlPath = Path
+open DocOckPaths
 
 type 'a t
 
 val empty : 'a t
 
-val add_module : 'a signature -> Ident.t -> 'a t -> 'a t
+val add_module : 'a Identifier.Signature.t -> Ident.t -> 'a t -> 'a t
 
-val add_argument : 'a signature -> int -> Ident.t -> 'a t -> 'a t
+val add_parameter : 'a Identifier.Signature.t -> Ident.t -> 'a t -> 'a t
 
-val add_module_type : 'a signature -> Ident.t -> 'a t -> 'a t
+val add_module_type : 'a Identifier.Signature.t -> Ident.t -> 'a t -> 'a t
 
-val add_type : 'a signature -> Ident.t -> 'a t -> 'a t
+val add_type : 'a Identifier.Signature.t -> Ident.t -> 'a t -> 'a t
 
-val add_class : 'a signature -> Ident.t -> Ident.t -> Ident.t -> Ident.t ->
-                  'a t -> 'a t
+val add_class :
+  'a Identifier.Signature.t ->
+    Ident.t -> Ident.t -> Ident.t -> Ident.t -> 'a t -> 'a t
 
-val add_class_type : 'a signature -> Ident.t -> Ident.t -> Ident.t ->
-                     'a t -> 'a t
+val add_class_type :
+  'a Identifier.Signature.t -> Ident.t -> Ident.t -> Ident.t -> 'a t -> 'a t
 
-val add_signature_type_items : 'a signature -> Types.signature ->
-                                 'a t -> 'a t
+val add_signature_type_items :
+  'a Identifier.Signature.t -> Types.signature -> 'a t -> 'a t
 
-val add_signature_tree_items : 'a signature -> Typedtree.signature ->
-                                 'a t -> 'a t
+val add_signature_tree_items :
+  'a Identifier.Signature.t -> Typedtree.signature -> 'a t -> 'a t
 
-val add_structure_tree_items : 'a signature -> Typedtree.structure ->
-                                 'a t -> 'a t
+val add_structure_tree_items :
+  'a Identifier.Signature.t -> Typedtree.structure -> 'a t -> 'a t
 
 module Path : sig
 
-  val read_module : 'a t -> Path.t -> 'a DocOckPaths.Path.module_
+  val read_module : 'a t -> OCamlPath.t -> 'a Path.Module.t
 
-  val read_module_type : 'a t -> Path.t -> 'a DocOckPaths.Path.module_type
+  val read_module_type : 'a t -> OCamlPath.t -> 'a Path.ModuleType.t
 
-  val read_type : 'a t -> Path.t -> 'a DocOckPaths.Path.type_
+  val read_type : 'a t -> OCamlPath.t -> 'a Path.Type.t
 
-  val read_class_type : 'a t -> Path.t -> 'a DocOckPaths.Path.class_type
+  val read_class_type : 'a t -> OCamlPath.t -> 'a Path.ClassType.t
 
 end
 
 
 module Fragment : sig
 
-  val read_module : Longident.t -> 'a DocOckPaths.Fragment.module_
+  val read_module : Longident.t -> 'a Fragment.Module.t
 
-  val read_type : Longident.t -> 'a DocOckPaths.Fragment.type_
+  val read_type : Longident.t -> 'a Fragment.Type.t
 
 end

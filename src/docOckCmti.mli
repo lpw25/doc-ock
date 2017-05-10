@@ -14,29 +14,29 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-val read_interface: 'a -> string -> Typedtree.signature ->
-  'a DocOckPaths.Identifier.module_ *
+val read_interface: 'a -> DocOckNames.UnitName.t -> Typedtree.signature ->
+  'a DocOckPaths.Identifier.Module.t *
   'a DocOckTypes.Documentation.t *
   'a DocOckTypes.Signature.t
 
 val read_module_type : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature -> int ->
+  'a DocOckPaths.Identifier.Signature.t ->
   Typedtree.module_type -> 'a DocOckTypes.ModuleType.expr
 
 val read_value_description : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature ->
+  'a DocOckPaths.Identifier.Signature.t ->
   Typedtree.value_description -> 'a DocOckTypes.Signature.item
 
 val read_type_declarations : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature ->
+  'a DocOckPaths.Identifier.Signature.t ->
   Typedtree.type_declaration list ->
   'a DocOckTypes.Signature.item list
 
 val read_module_type_declaration : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature ->
+  'a DocOckPaths.Identifier.Signature.t ->
   Typedtree.module_type_declaration -> 'a DocOckTypes.ModuleType.t
 
 val read_class_type_declarations : 'a DocOckIdentEnv.t ->
-  'a DocOckPaths.Identifier.signature ->
+  'a DocOckPaths.Identifier.Signature.t ->
   Typedtree.class_type Typedtree.class_infos list ->
   'a DocOckTypes.Signature.item list

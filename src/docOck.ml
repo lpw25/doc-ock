@@ -16,20 +16,22 @@
 
 module Attrs = DocOckAttrs
 
-module Maps = DocOckMaps
+module Names = DocOckNames
 
 module Paths = DocOckPaths
 
 module Types = DocOckTypes
 
-type 'a lookup_result = 'a DocOckComponentTbl.lookup_unit_result =
-  | Forward_reference
-  | Found of { root : 'a; hidden : bool }
-  | Not_found
+module Sexp = DocOckSexp
 
 let core_types = DocOckPredef.core_types
 
 let core_exceptions = DocOckPredef.core_exceptions
+
+type 'a lookup_result =
+  | Forward_reference
+  | Found of { root : 'a; hidden : bool }
+  | Not_found
 
 type 'a result =
   | Ok of 'a Types.Unit.t
@@ -50,8 +52,9 @@ let read_cmti root_fn filename =
       match cmt_info.cmt_interface_digest with
       | Some digest ->
         let name = cmt_info.cmt_modname in
+        let uname = Names.UnitName.of_string name in
         let root = root_fn name digest in
-        let (id, doc, items) = DocOckCmti.read_interface root name intf in
+        let (id, doc, items) = DocOckCmti.read_interface root uname intf in
         let imports =
           List.filter (fun (name', _) -> name <> name') cmt_info.cmt_imports
         in
@@ -59,7 +62,7 @@ let read_cmti root_fn filename =
           List.map (fun (s, d) -> Import.Unresolved(s, d)) imports
         in
         let interface = true in
-        let hidden = Paths.contains_double_underscore name in
+        let hidden = Names.UnitName.is_hidden uname in
         let source =
           match cmt_info.cmt_sourcefile, cmt_info.cmt_source_digest with
           | Some file, Some digest ->
@@ -73,7 +76,6 @@ let read_cmti root_fn filename =
           {id; doc; digest; imports; source;
            interface; hidden; content; expansion = None}
         in
-        let unit = DocOckLookup.lookup unit in
           Ok unit
       | None -> Corrupted
     end
@@ -93,6 +95,7 @@ let read_cmt root_fn filename =
     match cmt_info.cmt_annots with
     | Packed(_, files) ->
         let name = cmt_info.cmt_modname in
+        let uname = Names.UnitName.of_string name in
         let interface, digest =
           match cmt_info.cmt_interface_digest with
           | Some digest -> true, digest
@@ -102,9 +105,10 @@ let read_cmt root_fn filename =
             | None -> assert false
             | exception Not_found -> assert false
         in
-        let hidden = Paths.contains_double_underscore name in
+        let hidden = Names.UnitName.is_hidden uname in
         let root = root_fn name digest in
-        let id = Paths.Identifier.Root(root, name) in
+        let unit_name = Names.UnitName.of_string name in
+        let id = Paths.Identifier.Module.Root(root, unit_name) in
         let items =
           List.map
             (fun file ->
@@ -117,8 +121,10 @@ let read_cmt root_fn filename =
           List.map
             (fun name ->
                let open Packed in
-               let id = Paths.Identifier.Module(id, name) in
-               let path = Paths.Path.Root name in
+               let module_name = Names.ModuleName.of_string name in
+               let parent = Paths.Identifier.Signature.of_module id in
+               let id = Paths.Identifier.Module.Module(parent, module_name) in
+               let path = Paths.Path.Module.Root name in
                  {id; path})
             items
         in
@@ -136,6 +142,7 @@ let read_cmt root_fn filename =
     | Implementation impl ->
         let open Types.Unit in
         let name = cmt_info.cmt_modname in
+        let uname = Names.UnitName.of_string name in
         let interface, digest =
           match cmt_info.cmt_interface_digest with
           | Some digest -> true, digest
@@ -145,9 +152,9 @@ let read_cmt root_fn filename =
               | None -> assert false
               | exception Not_found -> assert false
         in
-        let hidden = Paths.contains_double_underscore name in
+        let hidden = Names.UnitName.is_hidden uname in
         let root = root_fn name digest in
-        let (id, doc, items) = DocOckCmt.read_implementation root name impl in
+        let (id, doc, items) = DocOckCmt.read_implementation root uname impl in
         let imports =
           List.filter (fun (name', _) -> name <> name') cmt_info.cmt_imports
         in
@@ -167,7 +174,6 @@ let read_cmt root_fn filename =
           {id; doc; digest; imports;
            source; interface; hidden; content; expansion = None}
         in
-        let unit = DocOckLookup.lookup unit in
           Ok unit
     | _ -> Not_an_implementation
   with
@@ -183,22 +189,22 @@ let read_cmi root_fn filename =
     let cmi_info = read_cmi filename in
       match cmi_info.cmi_crcs with
       | (name, Some digest) :: imports when name = cmi_info.cmi_name ->
+          let uname = Names.UnitName.of_string name in
           let root = root_fn name digest in
           let (id, doc, items) =
-            DocOckCmi.read_interface root name cmi_info.cmi_sign
+            DocOckCmi.read_interface root uname cmi_info.cmi_sign
           in
           let imports =
             List.map (fun (s, d) -> Import.Unresolved(s, d)) imports
           in
           let interface = true in
-          let hidden = Paths.contains_double_underscore name in
+          let hidden = Names.UnitName.is_hidden uname in
           let source = None in
           let content = Module items in
           let unit =
             {id; doc; digest; imports;
              source; interface; hidden; content; expansion = None}
           in
-          let unit = DocOckLookup.lookup unit in
             Ok unit
       | _ -> Corrupted
   with
@@ -206,16 +212,10 @@ let read_cmi root_fn filename =
   | Cmi_format.Error (Wrong_version_interface _) -> Wrong_version
   | Cmi_format.Error (Corrupted_interface _) -> Corrupted
 
-type 'a resolver = 'a DocOckResolve.resolver
+type 'a resolver = ()
 
-let build_resolver = DocOckResolve.build_resolver
+let build_resolver ?equal ?hash _ _ _ _ = failwith "Not implemented"
 
-let resolve = DocOckResolve.resolve
+let compile _ = failwith "Not implemented"
 
-let resolve_page = DocOckResolve.resolve_page
-
-type 'a expander = 'a DocOckExpand.t
-
-let build_expander = DocOckExpand.build_expander
-
-let expand = DocOckExpand.expand
+let link _ = failwith "Not implemented"

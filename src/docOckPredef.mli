@@ -19,109 +19,106 @@ open DocOckTypes
 
 (** {3 Identifiers} *)
 
-val bool_identifier : 'a Identifier.type_
-val int_identifier : 'a Identifier.type_
-val char_identifier : 'a Identifier.type_
-val bytes_identifier : 'a Identifier.type_
-val string_identifier : 'a Identifier.type_
-val float_identifier : 'a Identifier.type_
-val unit_identifier : 'a Identifier.type_
-val exn_identifier : 'a Identifier.type_
-val array_identifier : 'a Identifier.type_
-val list_identifier : 'a Identifier.type_
-val option_identifier : 'a Identifier.type_
-val int32_identifier : 'a Identifier.type_
-val int64_identifier : 'a Identifier.type_
-val nativeint_identifier : 'a Identifier.type_
-val lazy_t_identifier : 'a Identifier.type_
-val extension_constructor_identifier : 'a Identifier.type_
+val bool_identifier : 'a Identifier.Type.t
+val int_identifier : 'a Identifier.Type.t
+val char_identifier : 'a Identifier.Type.t
+val bytes_identifier : 'a Identifier.Type.t
+val string_identifier : 'a Identifier.Type.t
+val float_identifier : 'a Identifier.Type.t
+val unit_identifier : 'a Identifier.Type.t
+val exn_identifier : 'a Identifier.Type.t
+val array_identifier : 'a Identifier.Type.t
+val list_identifier : 'a Identifier.Type.t
+val option_identifier : 'a Identifier.Type.t
+val int32_identifier : 'a Identifier.Type.t
+val int64_identifier : 'a Identifier.Type.t
+val nativeint_identifier : 'a Identifier.Type.t
+val lazy_t_identifier : 'a Identifier.Type.t
+val extension_constructor_identifier : 'a Identifier.Type.t
 
-val false_identifier :'a Identifier.constructor
-val true_identifier :'a Identifier.constructor
-val void_identifier :'a Identifier.constructor
-val nil_identifier :'a Identifier.constructor
-val cons_identifier :'a Identifier.constructor
-val none_identifier :'a Identifier.constructor
-val some_identifier :'a Identifier.constructor
+val false_identifier :'a Identifier.Constructor.t
+val true_identifier :'a Identifier.Constructor.t
+val void_identifier :'a Identifier.Constructor.t
+val nil_identifier :'a Identifier.Constructor.t
+val cons_identifier :'a Identifier.Constructor.t
+val none_identifier :'a Identifier.Constructor.t
+val some_identifier :'a Identifier.Constructor.t
 
-val match_failure_identifier : 'a Identifier.exception_
-val assert_failure_identifier : 'a Identifier.exception_
-val invalid_argument_identifier : 'a Identifier.exception_
-val failure_identifier : 'a Identifier.exception_
-val not_found_identifier : 'a Identifier.exception_
-val out_of_memory_identifier : 'a Identifier.exception_
-val stack_overflow_identifier : 'a Identifier.exception_
-val sys_error_identifier : 'a Identifier.exception_
-val end_of_file_identifier : 'a Identifier.exception_
-val division_by_zero_identifier : 'a Identifier.exception_
-val sys_blocked_io_identifier : 'a Identifier.exception_
-val undefined_recursive_module_identifier : 'a Identifier.exception_
+val match_failure_identifier : 'a Identifier.Exception.t
+val assert_failure_identifier : 'a Identifier.Exception.t
+val invalid_argument_identifier : 'a Identifier.Exception.t
+val failure_identifier : 'a Identifier.Exception.t
+val not_found_identifier : 'a Identifier.Exception.t
+val out_of_memory_identifier : 'a Identifier.Exception.t
+val stack_overflow_identifier : 'a Identifier.Exception.t
+val sys_error_identifier : 'a Identifier.Exception.t
+val end_of_file_identifier : 'a Identifier.Exception.t
+val division_by_zero_identifier : 'a Identifier.Exception.t
+val sys_blocked_io_identifier : 'a Identifier.Exception.t
+val undefined_recursive_module_identifier : 'a Identifier.Exception.t
 
-val core_type_identifier : string ->
-      ('a, [< Identifier.kind > `Type]) Identifier.t option
-val core_exception_identifier : string ->
-      ('a, [< Identifier.kind > `Exception]) Identifier.t option
-val core_constructor_identifier : string ->
-      ('a, [< Identifier.kind > `Constructor]) Identifier.t option
+val core_type_identifier : string -> 'a Identifier.Type.t option
+val core_exception_identifier : string -> 'a Identifier.Exception.t option
+val core_constructor_identifier : string -> 'a Identifier.Constructor.t option
 
 (** {3 Paths} *)
 
-val bool_path : 'a Path.type_
-val int_path : 'a Path.type_
-val char_path : 'a Path.type_
-val bytes_path : 'a Path.type_
-val string_path : 'a Path.type_
-val float_path : 'a Path.type_
-val unit_path : 'a Path.type_
-val exn_path : 'a Path.type_
-val array_path : 'a Path.type_
-val list_path : 'a Path.type_
-val option_path : 'a Path.type_
-val int32_path : 'a Path.type_
-val int64_path : 'a Path.type_
-val nativeint_path : 'a Path.type_
-val lazy_t_path : 'a Path.type_
-val extension_constructor_path : 'a Path.type_
+val bool_path : 'a Path.Type.t
+val int_path : 'a Path.Type.t
+val char_path : 'a Path.Type.t
+val bytes_path : 'a Path.Type.t
+val string_path : 'a Path.Type.t
+val float_path : 'a Path.Type.t
+val unit_path : 'a Path.Type.t
+val exn_path : 'a Path.Type.t
+val array_path : 'a Path.Type.t
+val list_path : 'a Path.Type.t
+val option_path : 'a Path.Type.t
+val int32_path : 'a Path.Type.t
+val int64_path : 'a Path.Type.t
+val nativeint_path : 'a Path.Type.t
+val lazy_t_path : 'a Path.Type.t
+val extension_constructor_path : 'a Path.Type.t
 
 (** {3 References} *)
 
-val bool_reference : 'a Reference.type_
-val int_reference : 'a Reference.type_
-val char_reference : 'a Reference.type_
-val bytes_reference : 'a Reference.type_
-val string_reference : 'a Reference.type_
-val float_reference : 'a Reference.type_
-val unit_reference : 'a Reference.type_
-val exn_reference : 'a Reference.type_
-val array_reference : 'a Reference.type_
-val list_reference : 'a Reference.type_
-val option_reference : 'a Reference.type_
-val int32_reference : 'a Reference.type_
-val int64_reference : 'a Reference.type_
-val nativeint_reference : 'a Reference.type_
-val lazy_t_reference : 'a Reference.type_
-val extension_constructor_reference : 'a Reference.type_
+val bool_reference : 'a Reference.t
+val int_reference : 'a Reference.t
+val char_reference : 'a Reference.t
+val bytes_reference : 'a Reference.t
+val string_reference : 'a Reference.t
+val float_reference : 'a Reference.t
+val unit_reference : 'a Reference.t
+val exn_reference : 'a Reference.t
+val array_reference : 'a Reference.t
+val list_reference : 'a Reference.t
+val option_reference : 'a Reference.t
+val int32_reference : 'a Reference.t
+val int64_reference : 'a Reference.t
+val nativeint_reference : 'a Reference.t
+val lazy_t_reference : 'a Reference.t
+val extension_constructor_reference : 'a Reference.t
 
-val false_reference : 'a Reference.constructor
-val true_reference : 'a Reference.constructor
-val void_reference : 'a Reference.constructor
-val nil_reference : 'a Reference.constructor
-val cons_reference : 'a Reference.constructor
-val none_reference : 'a Reference.constructor
-val some_reference : 'a Reference.constructor
+val false_reference : 'a Reference.t
+val true_reference : 'a Reference.t
+val void_reference : 'a Reference.t
+val nil_reference : 'a Reference.t
+val cons_reference : 'a Reference.t
+val none_reference : 'a Reference.t
+val some_reference : 'a Reference.t
 
-val match_failure_reference : 'a Reference.exception_
-val assert_failure_reference : 'a Reference.exception_
-val invalid_argument_reference : 'a Reference.exception_
-val failure_reference : 'a Reference.exception_
-val not_found_reference : 'a Reference.exception_
-val out_of_memory_reference : 'a Reference.exception_
-val stack_overflow_reference : 'a Reference.exception_
-val sys_error_reference : 'a Reference.exception_
-val end_of_file_reference : 'a Reference.exception_
-val division_by_zero_reference : 'a Reference.exception_
-val sys_blocked_io_reference : 'a Reference.exception_
-val undefined_recursive_module_reference : 'a Reference.exception_
+val match_failure_reference : 'a Reference.t
+val assert_failure_reference : 'a Reference.t
+val invalid_argument_reference : 'a Reference.t
+val failure_reference : 'a Reference.t
+val not_found_reference : 'a Reference.t
+val out_of_memory_reference : 'a Reference.t
+val stack_overflow_reference : 'a Reference.t
+val sys_error_reference : 'a Reference.t
+val end_of_file_reference : 'a Reference.t
+val division_by_zero_reference : 'a Reference.t
+val sys_blocked_io_reference : 'a Reference.t
+val undefined_recursive_module_reference : 'a Reference.t
 
 (** {3 Declarations} *)
 

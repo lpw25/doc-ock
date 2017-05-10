@@ -14,20 +14,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+module OCamlPath = Path
+
 open DocOckPredef
-
-module Id = DocOckPaths.Identifier
-module Rp = DocOckPaths.Path.Resolved
-
-type 'a type_ident = ('a, [`Type|`Class|`ClassType]) Id.t
-
-type 'a class_type_ident = ('a, [`Class|`ClassType]) Id.t
+open DocOckNames
+open DocOckPaths.Identifier
 
 type 'a t =
-  { modules : 'a Rp.module_ Ident.tbl;
-    module_types : 'a Id.module_type Ident.tbl;
-    types : 'a type_ident Ident.tbl;
-    class_types : 'a class_type_ident Ident.tbl; }
+  { modules : 'a Path.Module.t Ident.tbl;
+    module_types : 'a Path.ModuleType.t Ident.tbl;
+    types : 'a Path.Type.t Ident.tbl;
+    class_types : 'a Path.ClassType.t Ident.tbl; }
 
 let empty =
   { modules = Ident.empty;
@@ -37,57 +34,55 @@ let empty =
 
 let builtin_idents = List.map snd Predef.builtin_idents
 
-let should_be_hidden = DocOckPaths.contains_double_underscore
-
 let add_module parent id env =
-  let name = Ident.name id in
-  let ident = Rp.Identifier (Id.Module(parent, name)) in
-  let module_ = if should_be_hidden name then Rp.Hidden ident else ident in
-  let modules = Ident.add id module_ env.modules in
+  let name = ModuleName.of_ident id in
+  let identifier = Path.Module.Module(parent, name) in
+  let modules = Ident.add id identifier env.modules in
     { env with modules }
 
-let add_argument parent arg id env =
-  let name = Ident.name id in
-  let ident = Rp.Identifier (Id.Argument(parent, arg, name)) in
-  let module_ = if should_be_hidden name then Rp.Hidden ident else ident in
-  let modules = Ident.add id module_ env.modules in
+let add_parameter parent id env =
+  let name = FunctorParameterName.of_ident id in
+  let identifier = Path.Module.FunctorParameter(parent, name) in
+  let modules = Ident.add id identifier env.modules in
     { env with modules }
 
 let add_module_type parent id env =
-  let name = Ident.name id in
-  let identifier = Id.ModuleType(parent, name) in
+  let name = ModuleTypeName.of_ident id in
+  let identifier = Path.ModuleType.ModuleType(parent, name) in
   let module_types = Ident.add id identifier env.module_types in
     { env with module_types }
 
 let add_type parent id env =
-  let name = Ident.name id in
-  let identifier = Id.Type(parent, name) in
+  let name = TypeName.of_ident id in
+  let identifier = Path.Type.Type(parent, name) in
   let types = Ident.add id identifier env.types in
     { env with types }
 
 let add_class parent id ty_id obj_id cl_id env =
-  let name = Ident.name id in
-  let identifier = Id.Class(parent, name) in
-  let add_idents tbl =
+  let name = ClassName.of_ident id in
+  let type_identifier = Path.Type.Class(parent, name) in
+  let class_type_identifier = Path.ClassType.Class(parent, name) in
+  let add_idents identifier tbl =
     Ident.add id identifier
       (Ident.add ty_id identifier
          (Ident.add obj_id identifier
             (Ident.add cl_id identifier tbl)))
   in
-  let types = add_idents env.types in
-  let class_types = add_idents env.class_types in
+  let types = add_idents type_identifier env.types in
+  let class_types = add_idents class_type_identifier env.class_types in
     { env with types; class_types }
 
 let add_class_type parent id obj_id cl_id env =
-  let name = Ident.name id in
-  let identifier = Id.ClassType(parent, name) in
-  let add_idents tbl =
+  let name = ClassTypeName.of_ident id in
+  let type_identifier = Path.Type.ClassType(parent, name) in
+  let class_type_identifier = Path.ClassType.ClassType(parent, name) in
+  let add_idents identifier tbl =
     Ident.add id identifier
          (Ident.add obj_id identifier
             (Ident.add cl_id identifier tbl))
   in
-  let types = add_idents env.types in
-  let class_types = add_idents env.class_types in
+  let types = add_idents type_identifier env.types in
+  let class_types = add_idents class_type_identifier env.class_types in
     { env with types; class_types }
 
 let rec add_signature_type_items parent items env =
@@ -231,7 +226,7 @@ let find_type env id =
   with Not_found ->
     if List.mem id builtin_idents then
         match core_type_identifier (Ident.name id) with
-        | Some id -> id
+        | Some id -> Path.Type.of_type id
         | None -> raise Not_found
     else raise Not_found
 
@@ -244,48 +239,48 @@ module Path = struct
   open DocOckPaths.Path
 
   let read_module_ident env id =
-    if Ident.persistent id then Root (Ident.name id)
+    if Ident.persistent id then Module.Root (Ident.name id)
     else
-      try Resolved (find_module env id)
+      try Module.Resolved (Identifier (find_module env id))
       with Not_found -> assert false
 
   let read_module_type_ident env id =
     try
-      Resolved (Identifier (find_module_type env id))
+      ModuleType.Resolved (Identifier (find_module_type env id))
     with Not_found -> assert false
 
   let read_type_ident env id =
     try
-      Resolved (Identifier (find_type env id))
+      Type.Resolved (Identifier (find_type env id))
     with Not_found -> assert false
 
-  let read_class_type_ident env id : 'a class_type =
+  let read_class_type_ident env id =
     try
-      Resolved (Identifier (find_class_type env id))
+      ClassType.Resolved (Identifier (find_class_type env id))
     with Not_found ->
-      Dot(Root "*", (Ident.name id))
+      ClassType.Dot(Root "*", (Ident.name id))
       (* TODO remove this hack once the fix for PR#6650
          is in the OCaml release *)
 
   let rec read_module env = function
-    | Path.Pident id -> read_module_ident env id
-    | Path.Pdot(p, s, _) -> Dot(read_module env p, s)
-    | Path.Papply(p, arg) -> Apply(read_module env p, read_module env arg)
+    | OCamlPath.Pident id -> read_module_ident env id
+    | OCamlPath.Pdot(p, s, _) -> Dot(read_module env p, s)
+    | OCamlPath.Papply(p, arg) -> Apply(read_module env p, read_module env arg)
 
   let read_module_type env = function
-    | Path.Pident id -> read_module_type_ident env id
-    | Path.Pdot(p, s, _) -> Dot(read_module env p, s)
-    | Path.Papply(_, _)-> assert false
+    | OCamlPath.Pident id -> read_module_type_ident env id
+    | OCamlPath.Pdot(p, s, _) -> Dot(read_module env p, s)
+    | OCamlPath.Papply(_, _)-> assert false
 
   let read_class_type env = function
-    | Path.Pident id -> read_class_type_ident env id
-    | Path.Pdot(p, s, _) -> Dot(read_module env p, s)
-    | Path.Papply(_, _)-> assert false
+    | OCamlPath.Pident id -> read_class_type_ident env id
+    | OCamlPath.Pdot(p, s, _) -> Dot(read_module env p, s)
+    | OCamlPath.Papply(_, _)-> assert false
 
   let read_type env = function
-    | Path.Pident id -> read_type_ident env id
-    | Path.Pdot(p, s, _) -> Dot(read_module env p, s)
-    | Path.Papply(_, _)-> assert false
+    | OCamlPath.Pident id -> read_type_ident env id
+    | OCamlPath.Pdot(p, s, _) -> Dot(read_module env p, s)
+    | OCamlPath.Papply(_, _)-> assert false
 
 end
 
@@ -295,13 +290,13 @@ module Fragment = struct
   open DocOckPaths.Fragment
 
   let rec read_module = function
-    | Longident.Lident s -> Dot(Resolved Root, s)
-    | Longident.Ldot(p, s) -> Dot(signature_of_module (read_module p), s)
+    | Longident.Lident s -> Module.Dot(Resolved Base, s)
+    | Longident.Ldot(p, s) -> Module.Dot(Signature.of_module (read_module p), s)
     | Longident.Lapply _ -> assert false
 
   let read_type = function
-    | Longident.Lident s -> Dot(Resolved Root, s)
-    | Longident.Ldot(p, s) -> Dot(signature_of_module (read_module p), s)
+    | Longident.Lident s -> Type.Dot(Resolved Base, s)
+    | Longident.Ldot(p, s) -> Type.Dot(Signature.of_module (read_module p), s)
     | Longident.Lapply _ -> assert false
 
 end

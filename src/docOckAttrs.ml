@@ -15,6 +15,8 @@
  *)
 
 open Octavius.Types
+open DocOckNames
+open DocOckPaths
 open DocOckTypes.Documentation
 
 let opt_map f = function
@@ -34,401 +36,169 @@ let read_style = function
 
 exception InvalidReference of string
 
-let read_qualifier :
-  string option ->
-  [< DocOckPaths.Reference.kind ] DocOckPaths.Reference.tag
-  = function
-  | None -> TUnknown
-  | Some "module" -> TModule
-  | Some "module-type" -> TModuleType
-  | Some "type" -> TType
-  | Some ("const" | "constructor") -> TConstructor
-  | Some ("recfield" | "field") -> TField
-  | Some "extension" -> TExtension
-  | Some ("exn" | "exception") -> TException
-  | Some ("val" | "value") -> TValue
-  | Some "class" -> TClass
-  | Some ("classtype" | "class-type") -> TClassType
-  | Some "method" -> TMethod
-  | Some "instance-variable" -> TInstanceVariable
-  | Some ("section" | "label") -> TLabel
-  | Some ("page") -> TPage
-  | Some s -> raise (InvalidReference ("unknown qualifier `" ^ s ^ "'"))
-
-let read_longident s =
+let read_reference_string s =
   let open DocOckPaths.Reference in
-  let split_qualifier str =
-    match String.rindex str '-' with
-    | exception Not_found -> (None, str)
+  let qualified parent s =
+    match String.rindex s '-' with
+    | exception Not_found -> Unknown(parent, s)
     | idx ->
-      let qualifier = String.sub str 0 idx in
-      let name = String.sub str (idx + 1) (String.length str - idx - 1) in
-      (Some qualifier, name)
+      let qualifier = String.sub s 0 idx in
+      let name = String.sub s (idx + 1) (String.length s - idx - 1) in
+      match qualifier with
+      | "module" -> Module(parent, name)
+      |  "module-type" -> ModuleType(parent, name)
+      |  "type" -> Type(parent, s)
+      | "const" | "constructor" -> Constructor(parent, name)
+      | "recfield" | "field" -> Field(parent, name)
+      | "extension" -> Extension(parent, name)
+      | "exn" | "exception" -> Exception(parent, name)
+      | "val" | "value" -> Value(parent, name)
+      | "class" -> Class(parent, name)
+      | "classtype" | "class-type" -> ClassType(parent, name)
+      | "method" -> Method(parent, name)
+      | "instance-variable" -> InstanceVariable(parent, name)
+      | "section" | "label" -> Label(parent, name)
+      | "page" -> Page(parent, name)
+      | _ -> raise (InvalidReference ("unknown qualifier `" ^ qualifier ^ "'"))
   in
-  let rec loop_datatype : string -> int -> 'a datatype option =
-    fun s pos ->
+  let rec loop s pos =
+    let parent, start, length =
       match String.rindex_from s pos '.' with
       | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          begin match read_qualifier kind with
-          | TUnknown | TType as tag -> Some (Root(name, tag))
-          | _ -> None
-          end
+          None, 0, pos + 1
       | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(label_parent_of_parent parent, name))
-            end
-          | TType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Type(parent, name))
-            end
-          | _ -> None
-  and loop_signature : string -> int -> 'a signature option = fun s pos ->
-      match String.rindex_from s pos '.' with
-      | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          begin match read_qualifier kind with
-          | TUnknown | TModule | TModuleType as tag -> Some (Root(name, tag))
-          | _ -> None
-          end
-      | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(label_parent_of_parent parent, name))
-            end
-          | TModule -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Module(parent, name))
-            end
-          | TModuleType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ModuleType(parent, name))
-            end
-          | _ -> None
-  and loop_class_signature : string -> int -> 'a class_signature option =
-    fun s pos ->
-      match String.rindex_from s pos '.' with
-      | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          begin match read_qualifier kind with
-          | TUnknown | TClass | TClassType as tag -> Some (Root(name, tag))
-          | _ -> None
-          end
-      | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(label_parent_of_parent parent, name))
-            end
-          | TClass -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Class(parent, name))
-            end
-          | TClassType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ClassType(parent, name))
-            end
-          | _ -> None
-  and loop_label_parent : string -> int -> 'a label_parent option =
-    fun s pos ->
-      match String.rindex_from s pos '.' with
-      | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          begin match read_qualifier kind with
-          | TUnknown | TModule | TModuleType
-          | TType | TClass | TClassType | TPage as tag ->
-            Some (Root(name, tag))
-          | _ -> None
-          end
-      | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_label_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(parent, name))
-            end
-          | TModule -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Module(parent, name))
-            end
-          | TModuleType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ModuleType(parent, name))
-            end
-          | TType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Type(parent, name))
-            end
-          | TClass -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Class(parent, name))
-            end
-          | TClassType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ClassType(parent, name))
-            end
-          | _ -> None
-  and loop_parent : string -> int -> 'a parent option =
-    fun s pos ->
-      match String.rindex_from s pos '.' with
-      | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          begin match read_qualifier kind with
-          | TUnknown
-          | TModule | TModuleType | TType | TClass | TClassType as tag ->
-            Some (Root(name, tag))
-          | _ -> None
-          end
-      | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(label_parent_of_parent parent, name))
-            end
-          | TModule -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Module(parent, name))
-            end
-          | TModuleType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ModuleType(parent, name))
-            end
-          | TType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Type(parent, name))
-            end
-          | TClass -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Class(parent, name))
-            end
-          | TClassType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ClassType(parent, name))
-            end
-          | _ -> None
+          Some (loop s (idx - 1)), idx + 1, pos + 1
+    in
+    let maybe_qualified = String.sub s 0 (pos + 1) in
+    if String.length maybe_qualified = 0 then raise (InvalidReference s)
+    else qualified parent maybe_qualified
   in
-  let loop : 'k. string -> int -> ('a, kind) t option =
-    fun s pos ->
-      match String.rindex_from s pos '.' with
-      | exception Not_found ->
-        let maybe_qualified = String.sub s 0 (pos + 1) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (kind, name) = split_qualifier maybe_qualified in
-          Some (Root (name, read_qualifier kind))
-      | idx ->
-        let maybe_qualified = String.sub s (idx + 1) (pos - idx) in
-        if String.length maybe_qualified = 0 then
-          None
-        else
-          let (qualifier, name) = split_qualifier maybe_qualified in
-          match read_qualifier qualifier with
-          | TUnknown -> begin
-              match loop_label_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Dot(parent, name))
-            end
-          | TModule -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Module(parent, name))
-            end
-          | TModuleType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ModuleType(parent, name))
-            end
-          | TType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Type(parent, name))
-            end
-          | TConstructor -> begin
-              match loop_datatype s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Constructor(parent, name))
-            end
-          | TField -> begin
-              match loop_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Field(parent, name))
-            end
-          | TExtension -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Extension(parent, name))
-            end
-          | TException -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Exception(parent, name))
-            end
-          | TValue -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Value(parent, name))
-            end
-          | TClass -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Class(parent, name))
-            end
-          | TClassType -> begin
-              match loop_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (ClassType(parent, name))
-            end
-          | TMethod -> begin
-              match loop_class_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Method(parent, name))
-            end
-          | TInstanceVariable -> begin
-              match loop_class_signature s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (InstanceVariable(parent, name))
-            end
-          | TLabel -> begin
-              match loop_label_parent s (idx - 1) with
-              | None -> None
-              | Some parent -> Some (Label(parent, name))
-            end
-          | TPage -> None
-  in
-    match loop s (String.length s - 1) with
-    | None -> raise (InvalidReference s)
-    | Some r -> r
+  loop s (String.length s - 1)
 
-let read_path_longident s =
-  let open DocOckPaths.Path in
-  let rec loop : 'k. string -> int -> ('a, [< kind > `Module ] as 'k) t option =
-    fun s pos ->
-      try
-        let idx = String.rindex_from s pos '.' in
-        let name = String.sub s (idx + 1) (pos - idx) in
-        if String.length name = 0 then None
-        else
-          match loop s (idx - 1) with
-          | None -> None
-          | Some parent -> Some (Dot(parent, name))
-      with Not_found ->
-        let name = String.sub s 0 (pos + 1) in
-        if String.length name = 0 then None
-        else Some (Root name)
-  in
-    match loop s (String.length s - 1) with
-    | None -> raise (InvalidReference s)
-    | Some r -> r
-
-exception Expected_reference_to_a_module_but_got of string
-
-let read_mod_longident lid : _ DocOckPaths.Reference.module_ =
+let read_module_reference_string s =
   let open DocOckPaths.Reference in
-  match read_longident lid with
-  | Root (_, (TUnknown | TModule))
-  | Dot (_, _)
-  | Module (_,_) as r -> r
-  | _ ->
-      (* FIXME: propagate location *)
-      raise (Expected_reference_to_a_module_but_got lid)
+  match read_reference_string s with
+  | Unknown(parent, s) -> Module(parent, s)
+  | Module _ as r -> r
+  | _ -> raise (InvalidReference ("invalid module reference " ^ s))
+
+let read_module_type_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> ModuleType(parent, s)
+  | ModuleType _ as r -> r
+  | _ -> raise (InvalidReference ("invalid module type reference " ^ s))
+
+let read_type_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Type(parent, s)
+  | (Type _ | Class _ | ClassType _) as r -> r
+  | _ -> raise (InvalidReference ("invalid type reference " ^ s))
+
+let read_constructor_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Constructor(parent, s)
+  | (Constructor _ | Exception _ | Extension _) as r -> r
+  | _ -> raise (InvalidReference ("invalid constructor reference " ^ s))
+
+let read_field_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Field(parent, s)
+  | Field _ as r -> r
+  | _ -> raise (InvalidReference ("invalid field reference " ^ s))
+
+let read_exception_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) | Constructor(parent, s) | Extension(parent, s) ->
+      Exception(parent, s)
+  | Exception _ as r -> r
+  | _ -> raise (InvalidReference ("invalid exception reference " ^ s))
+
+let read_value_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Value(parent, s)
+  | Value _ as r -> r
+  | _ -> raise (InvalidReference ("invalid value reference " ^ s))
+
+let read_class_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) | Type(parent, s) | ClassType(parent, s) ->
+      Class(parent, s)
+  | Class _ as r -> r
+  | _ -> raise (InvalidReference ("invalid class reference " ^ s))
+
+let read_class_type_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) | Type(parent, s) -> ClassType(parent, s)
+  | (ClassType _ | Class _) as r -> r
+  | _ -> raise (InvalidReference ("invalid class type reference " ^ s))
+
+let read_method_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Method(parent, s)
+  | Method _ as r -> r
+  | _ -> raise (InvalidReference ("invalid method reference " ^ s))
+
+let read_instance_variable_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> InstanceVariable(parent, s)
+  | InstanceVariable _ as r -> r
+  | _ -> raise (InvalidReference ("invalid instance variable reference " ^ s))
+
+let read_label_reference_string s =
+  let open DocOckPaths.Reference in
+  match read_reference_string s with
+  | Unknown(parent, s) -> Label(parent, s)
+  | Label _ as r -> r
+  | _ -> raise (InvalidReference ("invalid label reference " ^ s))
+
+exception InvalidPath of string
+
+let read_simple_string s =
+  let open DocOckPaths.Simple.Module in
+  let rec loop s pos =
+    match String.rindex_from s pos '.' with
+    | exception Not_found ->
+        let name = String.sub s 0 (pos + 1) in
+        if String.length name = 0 then raise (InvalidPath s)
+        else Root name
+    | idx ->
+        let name = String.sub s (idx + 1) (pos - idx) in
+        if String.length name = 0 then raise (InvalidPath s)
+        else Dot(loop s (idx - 1), name)
+  in
+  loop s (String.length s - 1)
 
 let read_reference rk s =
-(*   let open DocOckPaths.Reference in *)
-  let parsed_ref = lazy (read_longident s) in
-  match rk, parsed_ref with
-  | RK_link, _ -> Link s
-  | RK_custom k, _ -> Custom(k, s)
-  | RK_element, lazy ref -> Element ref
-  | RK_module, lazy ref -> Element ref
-  | RK_module_type, lazy ref -> Element ref
-  | RK_type, lazy ref -> Element ref
-  | RK_exception, lazy ref -> Element ref
-  | RK_recfield, lazy ref -> Element ref
-  | RK_const, lazy ref -> Element ref
-  | RK_value, lazy ref -> Element ref
-  | RK_class, lazy ref -> Element ref
-  | RK_class_type, lazy ref -> Element ref
-  | RK_attribute, lazy ref -> Element ref
-  | RK_method, lazy ref -> Element ref
-  | RK_section, lazy ref -> Element ref
-                              (*
-  | _, _ ->
-      (* FIXME: propagate location *)
-      (* FIXME: better error message *)
-      raise (InvalidReference "Conflicting kinds")
-                                 *)
+  match rk with
+  | RK_link -> Link s
+  | RK_custom k -> Custom(k, s)
+  | RK_element -> Element (read_reference_string s)
+  | RK_module -> Element (read_module_reference_string s)
+  | RK_module_type -> Element (read_module_type_reference_string s)
+  | RK_type -> Element (read_type_reference_string s)
+  | RK_const -> Element (read_constructor_reference_string s)
+  | RK_recfield -> Element (read_field_reference_string s)
+  | RK_exception -> Element (read_exception_reference_string s)
+  | RK_value -> Element (read_value_reference_string s)
+  | RK_class -> Element (read_class_reference_string s)
+  | RK_class_type -> Element (read_class_type_reference_string s)
+  | RK_method -> Element (read_method_reference_string s)
+  | RK_attribute -> Element (read_instance_variable_reference_string s)
+  | RK_section -> Element (read_label_reference_string s)
 
 let read_special_reference = function
   | SRK_module_list mds ->
-      Modules (List.map (fun lid -> read_mod_longident lid, []) mds)
+      Modules (List.map (fun lid -> read_simple_string lid, []) mds)
   | SRK_index_list -> Index
 
 let rec read_text_element parent
@@ -447,7 +217,8 @@ let rec read_text_element parent
         match l with
         | None -> Title(i, None, txt)
         | Some name ->
-            let id = DocOckPaths.Identifier.Label(parent, name) in
+            let name = LabelName.of_string name in
+            let id = DocOckPaths.Identifier.Label.Label(parent, name) in
               Title(i, Some id, txt)
     end
   | Ref(rk, s, txt) ->
@@ -475,11 +246,22 @@ let read_tag parent : Octavius.Types.tag -> 'a tag = function
   | Return_value t -> Return (read_text parent t)
   | Inline -> Inline
   | Custom (s, t) -> Tag (s, read_text parent t)
-  | Canonical p -> Canonical (read_path_longident p, read_mod_longident p)
+  | Canonical p -> Canonical (read_simple_string p)
 
 let empty_body = { text = []; tags = []; }
 
 let empty = Ok empty_body
+
+let read_payload =
+  let open Parsetree in function
+  | PStr[{ pstr_desc =
+             Pstr_eval({ pexp_desc =
+                           Pexp_constant( Parsetree.Pconst_string(str, _));
+                         pexp_loc = loc;
+                         _
+                       }, _)
+         ; _ }] -> Some(str, loc)
+  | _ -> None
 
 let read_offset err =
   let open Octavius.Errors in
@@ -521,7 +303,6 @@ let read_location offset pos =
 
 let read_error origin err pos =
   let open Error in
-  let origin = DocOckPaths.Identifier.any origin in
   let offset = read_offset err in
   let location = read_location offset pos in
   let message = Octavius.Errors.message err.Octavius.Errors.error in
@@ -547,7 +328,6 @@ let attribute_location loc =
 
 let invalid_attribute_error origin loc =
   let open Error in
-  let origin = DocOckPaths.Identifier.any origin in
   let offset =
     let zero_pos = { Position.line = 0; column = 0 } in
     { Offset.start = zero_pos; finish = zero_pos }
@@ -558,7 +338,6 @@ let invalid_attribute_error origin loc =
 
 let invalid_reference_error origin loc s =
   let open Error in
-  let origin = DocOckPaths.Identifier.any origin in
   (* TODO get an actual offset *)
   let dummy = { Position.line = 0; column = 0} in
   let offset = { Offset.start = dummy; finish = dummy } in
@@ -567,9 +346,18 @@ let invalid_reference_error origin loc s =
   let message = "Invalid reference: \"" ^ s ^ "\"" in
     {origin; offset; location; message}
 
+let invalid_path_error origin loc s =
+  let open Error in
+  (* TODO get an actual offset *)
+  let dummy = { Position.line = 0; column = 0} in
+  let offset = { Offset.start = dummy; finish = dummy } in
+  (* TODO get an accurate location *)
+  let location = attribute_location loc in
+  let message = "Invalid path: \"" ^ s ^ "\"" in
+    {origin; offset; location; message}
+
 let several_deprecated_error origin loc =
   let open Error in
-  let origin = DocOckPaths.Identifier.any origin in
   (* TODO get an actual offset *)
   let dummy = { Position.line = 0; column = 0} in
   let offset = { Offset.start = dummy; finish = dummy } in
@@ -578,13 +366,12 @@ let several_deprecated_error origin loc =
   let message = "Several deprecation tags are attached to this item" in
     {origin; offset; location; message}
 
-
 let read_attributes parent id attrs =
   let ocaml_deprecated = ref None in
   let rec loop first nb_deprecated acc : _ -> 'a t = function
     | ({Location.txt =
           ("doc" | "ocaml.doc"); loc}, payload) :: rest -> begin
-        match DocOckPayload.read payload with
+        match read_payload payload with
         | Some (str, loc) -> begin
             let start_pos = loc.Location.loc_start in
             let lexbuf = Lexing.from_string str in
@@ -608,8 +395,11 @@ let read_attributes parent id attrs =
                         tags = acc.tags @ tags; }
                     in
                     loop false nb_deprecated acc rest
-                with InvalidReference s ->
-                  Error (invalid_reference_error id loc s)
+                with
+                | InvalidReference s ->
+                    Error (invalid_reference_error id loc s)
+                | InvalidPath s ->
+                    Error (invalid_path_error id loc s)
               end
             | Octavius.Error err -> Error (read_error id err start_pos)
           end
@@ -617,7 +407,7 @@ let read_attributes parent id attrs =
       end
     | ({Location.txt =
           ("deprecated" | "ocaml.deprecated"); _}, payload) :: rest -> begin
-        match DocOckPayload.read payload with
+        match read_payload payload with
         | Some (str, _) ->
           (* Not parsing with octavius here, we take the string verbatim. *)
           let deprecated_tag = Deprecated [Raw str] in
@@ -637,7 +427,78 @@ let read_attributes parent id attrs =
   in
     loop true 0 empty_body attrs
 
+let read_module_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_module id in
+  read_attributes parent id attrs
+
+let read_module_type_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_module_type id in
+  read_attributes parent id attrs
+
+let read_type_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_type id in
+  read_attributes parent id attrs
+
+let read_constructor_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_constructor id in
+  read_attributes parent id attrs
+
+let read_field_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_field id in
+  read_attributes parent id attrs
+
+let read_extension_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_extension id in
+  read_attributes parent id attrs
+
+let read_exception_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_exception id in
+  read_attributes parent id attrs
+
+let read_value_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_value id in
+  read_attributes parent id attrs
+
+let read_class_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_class id in
+  read_attributes parent id attrs
+
+let read_class_type_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  let id = Identifier.of_class_type id in
+  read_attributes parent id attrs
+
+let read_method_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_class_signature parent in
+  let id = Identifier.of_method id in
+  read_attributes parent id attrs
+
+let read_instance_variable_attributes parent id attrs =
+  let parent = Identifier.LabelParent.of_class_signature parent in
+  let id = Identifier.of_instance_variable id in
+  read_attributes parent id attrs
+
+let read_signature_attributes parent attrs =
+  let id = Identifier.of_signature parent in
+  let parent = Identifier.LabelParent.of_signature parent in
+  read_attributes parent id attrs
+
+let read_class_signature_attributes parent attrs =
+  let id = Identifier.of_class_signature parent in
+  let parent = Identifier.LabelParent.of_class_signature parent in
+  read_attributes parent id attrs
+
 let read_string parent loc str : 'a comment =
+  let origin = Identifier.of_label_parent parent in
   let lexbuf = Lexing.from_string str in
   let start_pos = loc.Location.loc_start in
   let doc =
@@ -647,10 +508,14 @@ let read_string parent loc str : 'a comment =
           let text = read_text parent text in
           let tags = List.map (read_tag parent) tags in
           Ok {text; tags}
-        with InvalidReference s ->
-          Error (invalid_reference_error parent loc s)
+        with
+        | InvalidReference s ->
+            Error (invalid_reference_error origin loc s)
+        | InvalidPath s ->
+            Error (invalid_path_error origin loc s)
       end
-    | Octavius.Error err -> Error (read_error parent err start_pos)
+    | Octavius.Error err ->
+        Error (read_error origin err start_pos)
   in
   Documentation doc
 
@@ -658,14 +523,23 @@ let read_comment parent : Parsetree.attribute -> 'a comment option =
   function
   | ({Location.txt =
         ("text" | "ocaml.text"); loc}, payload) -> begin
-      match DocOckPayload.read payload with
+      match read_payload payload with
       | Some ("/*", _loc) -> Some Stop
       | Some (str, loc) -> Some (read_string parent loc str)
       | None ->
-          let doc = Error (invalid_attribute_error parent loc) in
+          let origin = Identifier.of_label_parent parent in
+          let doc = Error (invalid_attribute_error origin loc) in
             Some (Documentation doc)
     end
   | _ -> None
+
+let read_signature_comment parent attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  read_comment parent attrs
+
+let read_class_signature_comment parent attrs =
+  let parent = Identifier.LabelParent.of_class_signature parent in
+  read_comment parent attrs
 
 let read_comments parent attrs =
   let coms =
@@ -677,3 +551,11 @@ let read_comments parent attrs =
       [] attrs
   in
     List.rev coms
+
+let read_signature_comments parent attrs =
+  let parent = Identifier.LabelParent.of_signature parent in
+  read_comments parent attrs
+
+let read_class_signature_comments parent attrs =
+  let parent = Identifier.LabelParent.of_class_signature parent in
+  read_comments parent attrs
