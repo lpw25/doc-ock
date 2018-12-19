@@ -340,11 +340,37 @@ class virtual ['a] reference : object
 
 end
 
+class virtual ['a] defn : object
+
+  method virtual root : 'a -> 'a
+
+  method defn_index : Defn.Index.t -> Defn.Index.t
+
+  method defn_name : string -> string
+
+  method defn : 'a Defn.t -> 'a Defn.t
+
+end
+
+class virtual ['a] decl : object
+
+  method virtual root : 'a -> 'a
+
+  method decl_index : Decl.Index.t -> Decl.Index.t
+
+  method decl_name : string -> string
+
+  method decl : 'a Decl.t -> 'a Decl.t
+
+end
+
 class virtual ['a] paths : object
   inherit ['a] identifier
   inherit ['a] path
   inherit ['a] fragment
   inherit ['a] reference
+  inherit ['a] defn
+  inherit ['a] decl
 end
 
 class virtual ['a] documentation : object
@@ -507,11 +533,11 @@ class virtual ['a] module_ : object
 
   method module_expansion : 'a Module.expansion -> 'a Module.expansion
 
-  method module_decl : 'a Module.decl -> 'a Module.decl
+  method module_expr : 'a Module.expr -> 'a Module.expr
 
   method module_ : 'a Module.t -> 'a Module.t
 
-  method module_equation : 'a Module.decl -> 'a Module.decl
+  method module_equation : 'a Module.Equation.t -> 'a Module.Equation.t
 
   method module_hidden : bool -> bool
 end
@@ -536,7 +562,7 @@ class virtual ['a] module_type : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
-  method virtual module_decl : 'a Module.decl -> 'a Module.decl
+  method virtual module_expr : 'a Module.expr -> 'a Module.expr
 
   method virtual module_equation : 'a Module.Equation.t -> 'a Module.Equation.t
 
@@ -594,7 +620,7 @@ end
 
 class virtual ['a] include_ : object
 
-  method virtual module_decl : 'a Module.decl -> 'a Module.decl
+  method virtual module_expr : 'a Module.expr -> 'a Module.expr
 
   method virtual identifier_signature : 'a Identifier.signature ->
                                         'a Identifier.signature
@@ -739,7 +765,7 @@ class virtual ['a] class_ : object
 
   method virtual class_signature : 'a ClassSignature.t -> 'a ClassSignature.t
 
-  method class_decl : 'a Class.decl -> 'a Class.decl
+  method class_expr : 'a Class.expr -> 'a Class.expr
 
   method class_ : 'a Class.t -> 'a Class.t
 
@@ -888,19 +914,13 @@ class virtual ['a] unit : object
 
   method virtual signature : 'a Signature.t -> 'a Signature.t
 
+  method virtual source : 'a Source.t -> 'a Source.t
+
   method unit_import : 'a Unit.Import.t -> 'a Unit.Import.t
 
   method unit_import_name : string -> string
 
   method unit_import_digest : Digest.t -> Digest.t
-
-  method unit_source : 'a Unit.Source.t -> 'a Unit.Source.t
-
-  method unit_source_file : string -> string
-
-  method unit_source_build_dir : string -> string
-
-  method unit_source_digest : Digest.t -> Digest.t
 
   method unit_packed_item : 'a Unit.Packed.item -> 'a Unit.Packed.item
 
@@ -915,6 +935,89 @@ class virtual ['a] unit : object
   method unit_interface : bool -> bool
 
   method unit_hidden : bool -> bool
+
+end
+
+class virtual ['a] source : object
+
+  method virtual path_module :
+    'a Path.module_ -> 'a Path.module_
+
+  method virtual path_module_type :
+    'a Path.module_type -> 'a Path.module_type
+
+  method virtual path_type :
+    'a Path.type_ -> 'a Path.type_
+
+  method virtual path_class_type :
+    'a Path.class_type -> 'a Path.class_type
+
+  method virtual reference_constructor :
+    'a Reference.constructor -> 'a Reference.constructor
+
+  method virtual reference_field :
+    'a Reference.field -> 'a Reference.field
+
+  method virtual reference_value :
+    'a Reference.value -> 'a Reference.value
+
+  method virtual reference_class :
+    'a Reference.class_ -> 'a Reference.class_
+
+  method virtual reference_method :
+    'a Reference.method_ -> 'a Reference.method_
+
+  method virtual reference_instance_variable :
+    'a Reference.instance_variable -> 'a Reference.instance_variable
+
+  method virtual decl : 'a Decl.t -> 'a Decl.t
+
+  method virtual defn : 'a Defn.t -> 'a Defn.t
+
+  method source_file_name : string -> string
+
+  method source_file_build_dir : string -> string
+
+  method source_file_digest : Digest.t -> Digest.t
+
+  method source_file : Source.File.t -> Source.File.t
+
+  method source_position_column : int -> int
+
+  method source_position_line : int -> int
+
+  method source_position :
+    Source.Position.t -> Source.Position.t
+
+  method source_location : Source.Location.t -> Source.Location.t
+
+  method source_use_path : 'a Source.Use.path -> 'a Source.Use.path
+
+  method source_use : 'a Source.Use.t -> 'a Source.Use.t
+
+  method source_declaration : Source.Declaration.t -> Source.Declaration.t
+
+  method source_definition: Source.Definition.t -> Source.Definition.t
+
+  method source_interface :
+    'a Source.Interface.t -> 'a Source.Interface.t
+
+  method source_implementation :
+    'a Source.Implementation.t -> 'a Source.Implementation.t
+
+  method source : 'a Source.t -> 'a Source.t
+
+  method source_decl_map_type :
+    'a Source.Decl_map.Type.t ->
+    'a Source.Decl_map.Type.t
+
+  method source_decl_map_class_signature :
+    'a Source.Decl_map.Class_signature.t ->
+    'a Source.Decl_map.Class_signature.t
+
+  method source_decl_map_signature :
+    'a Source.Decl_map.Signature.t ->
+    'a Source.Decl_map.Signature.t
 
 end
 
@@ -950,5 +1053,6 @@ class virtual ['a] types : object
   inherit ['a] instance_variable
   inherit ['a] type_expr
   inherit ['a] unit
+  inherit ['a] source
   inherit ['a] page
 end

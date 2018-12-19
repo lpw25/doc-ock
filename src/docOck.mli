@@ -36,9 +36,11 @@ type 'a result =
   | Not_a_typedtree
   | Not_an_implementation
 
-val read_cmti: (string -> Digest.t -> 'a) -> string -> 'a result
+val read_cmti: (string -> Digest.t -> 'a)
+  -> code:bool -> ?cmt:string -> cmti:string -> 'a result
 
-val read_cmt: (string -> Digest.t -> 'a) -> string -> 'a result
+val read_cmt: (string -> Digest.t -> 'a)
+  -> code:bool -> cmt:string -> 'a result
 
 val read_cmi: (string -> Digest.t -> 'a) -> string -> 'a result
 

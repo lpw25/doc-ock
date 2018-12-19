@@ -207,14 +207,18 @@ let false_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let args = Tuple [] in
   let res = None in
-    {id = false_identifier; doc; args; res}
+    {id = false_identifier; doc; decl; defn; args; res}
 
 let true_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let args = Tuple [] in
   let res = None in
     {id = true_identifier; doc; args; res}
@@ -223,6 +227,8 @@ let void_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let args = Tuple [] in
   let res = None in
     {id = void_identifier; doc; args; res}
@@ -231,6 +237,8 @@ let nil_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let args = Tuple [] in
   let res = None in
     {id = nil_identifier; doc; args; res}
@@ -239,6 +247,8 @@ let cons_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let head = TypeExpr.Var "'a" in
   let tail = TypeExpr.(Constr(list_path, [head])) in
   let args = Tuple [head; tail] in
@@ -249,6 +259,8 @@ let none_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let args = Tuple [] in
   let res = None in
     {id = none_identifier; doc; args; res}
@@ -257,6 +269,8 @@ let some_decl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
+  let decl = None in
+  let defn = None in
   let var = TypeExpr.Var "'a" in
   let args = Tuple [var] in
   let res = None in
@@ -269,6 +283,8 @@ let int_decl =
   let id = int_identifier in
   let text = [Raw "The type of integer numbers."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -279,6 +295,8 @@ let char_decl =
   let id = char_identifier in
   let text = [Raw "The type of characters."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -289,6 +307,8 @@ let bytes_decl =
   let id = bytes_identifier in
   let text = [Raw "The type of (writable) byte sequences."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -299,6 +319,8 @@ let string_decl =
   let id = string_identifier in
   let text = [Raw "The type of (read-only) character strings."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -309,6 +331,8 @@ let float_decl =
   let id = float_identifier in
   let text = [Raw "The type of floating-point numbers."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -320,6 +344,8 @@ let bool_decl =
   let id = bool_identifier in
   let text = [Raw "The type of booleans (truth values)."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = Some (Variant [false_decl; true_decl]) in
     {id; doc; equation; representation}
@@ -331,6 +357,8 @@ let unit_decl =
   let id = unit_identifier in
   let text = [Raw "The type of the unit value."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = Some (Variant [void_decl]) in
     {id; doc; equation; representation}
@@ -342,6 +370,8 @@ let exn_decl =
   let id = exn_identifier in
   let text = [Raw "The type of exception values."] in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = Some Extensible in
     {id; doc; equation; representation}
@@ -356,6 +386,8 @@ let array_decl =
      Raw "."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = invariant_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -371,6 +403,8 @@ let list_decl =
      Raw "."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = covariant_equation in
   let representation = Some (Variant [nil_decl; cons_decl]) in
     {id; doc; equation; representation}
@@ -386,6 +420,8 @@ let option_decl =
      Raw "."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = covariant_equation in
   let representation = Some (Variant [none_decl; some_decl]) in
     {id; doc; equation; representation}
@@ -400,6 +436,8 @@ let int32_decl =
      Raw " module."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -414,6 +452,8 @@ let int64_decl =
      Raw " module."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -429,6 +469,8 @@ let nativeint_decl =
      Raw " module."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = nullary_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -443,6 +485,8 @@ let lazy_t_decl =
      Raw " module. It should not be used directly."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = covariant_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -457,6 +501,8 @@ let extension_constructor_decl =
      Raw " module. It should not be used directly."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = covariant_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -471,6 +517,8 @@ let floatarray_decl =
      Raw " module. It should not be used directly."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let equation = covariant_equation in
   let representation = None in
     {id; doc; equation; representation}
@@ -486,6 +534,8 @@ let match_failure_decl =
      Raw " keyword in the source code (file name, line number, column number)."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let string_expr = TypeExpr.Constr(string_path, []) in
   let int_expr = TypeExpr.Constr(int_path, []) in
   let args =
@@ -505,6 +555,8 @@ let assert_failure_decl =
      Raw " keyword in the source code (file name, line number, column number)."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let string_expr = TypeExpr.Constr(string_path, []) in
   let int_expr = TypeExpr.Constr(int_path, []) in
   let args =
@@ -522,6 +574,8 @@ let invalid_argument_decl =
           arguments do not make sense."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
     {id; doc; args; res}
@@ -535,6 +589,8 @@ let failure_decl =
           undefined on the given arguments."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
     {id; doc; args; res}
@@ -548,6 +604,8 @@ let not_found_decl =
           could not be found."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -561,6 +619,8 @@ let out_of_memory_decl =
           insufficient memory to complete the computation."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -578,6 +638,8 @@ let stack_overflow_decl =
           the OCaml manual.)"]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -591,6 +653,8 @@ let sys_error_decl =
           operating system error."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
     {id; doc; args; res}
@@ -604,6 +668,8 @@ let end_of_file_decl =
           file has been reached."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -617,6 +683,8 @@ let division_by_zero_decl =
           when their second argument is zero."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -631,6 +699,8 @@ let sys_blocked_io_decl =
      Raw " raised when no I/O is possible on a non-blocking I/O channel."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
     {id; doc; args; res}
@@ -647,6 +717,8 @@ let undefined_recursive_module_decl =
           (file name, line number, column number)."]
   in
   let doc = Ok {empty_doc with text} in
+  let decl = None in
+  let defn = None in
   let string_expr = TypeExpr.Constr(string_path, []) in
   let int_expr = TypeExpr.Constr(int_path, []) in
   let args =

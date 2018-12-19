@@ -50,7 +50,7 @@ val read_class_signature : 'a DocOckIdentEnv.t ->
 val read_class_type : 'a DocOckIdentEnv.t ->
                       'a DocOckPaths.Identifier.class_signature ->
                       Types.type_expr list -> Types.class_type ->
-                      'a DocOckTypes.Class.decl
+                      'a DocOckTypes.Class.expr
 
 val read_module_type : 'a DocOckIdentEnv.t ->
                        'a DocOckPaths.Identifier.signature -> int ->

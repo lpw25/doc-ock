@@ -799,11 +799,55 @@ class virtual ['a] reference = object (self)
 
 end
 
+class virtual ['a] defn = object (self)
+
+  method virtual root : 'a -> 'a
+
+  method defn_index idx = idx
+
+  method defn_name s = s
+
+  method defn defn =
+    let open Defn in
+    let {root; name; index} = defn in
+    let root' = self#root root in
+    let name' = self#defn_name name in
+    let index' = self#defn_index index in
+    if root != root' || name != name' || index != index' then
+      {root = root'; name = name'; index = index'}
+    else
+      defn
+
+end
+
+class virtual ['a] decl = object (self)
+
+  method virtual root : 'a -> 'a
+
+  method decl_index idx = idx
+
+  method decl_name s = s
+
+  method decl decl =
+    let open Decl in
+    let {root; name; index} = decl in
+    let root' = self#root root in
+    let name' = self#decl_name name in
+    let index' = self#decl_index index in
+    if root != root' || name != name' || index != index' then
+      {root = root'; name = name'; index = index'}
+    else
+      decl
+
+end
+
 class virtual ['a] paths = object
   inherit ['a] identifier
   inherit ['a] path
   inherit ['a] fragment
   inherit ['a] reference
+  inherit ['a] defn
+  inherit ['a] decl
 end
 
 class virtual ['a] documentation = object (self)
@@ -1152,6 +1196,12 @@ class virtual ['a] module_ = object (self)
   method virtual reference_module :
     'a Reference.module_ -> 'a Reference.module_
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
@@ -1163,11 +1213,18 @@ class virtual ['a] module_ = object (self)
   method virtual module_type_functor_arg :
     'a FunctorArgument.t option -> 'a FunctorArgument.t option
 
+  method virtual source_decl_map_signature :
+    'a Source.Decl_map.Signature.t -> 'a Source.Decl_map.Signature.t
+
   method module_hidden h = h
 
   method module_expansion expn =
     let open Module in
     match expn with
+    | Not_yet_expanded decl_map ->
+        let decl_map' = self#source_decl_map_signature decl_map in
+        if decl_map != decl_map' then Not_yet_expanded decl_map'
+        else expn
     | AlreadyASig -> AlreadyASig
     | Signature sg ->
         let sg' = self#signature sg in
@@ -1193,22 +1250,29 @@ class virtual ['a] module_ = object (self)
 
   method module_ md =
     let open Module in
-    let {id; doc; type_; expansion; canonical; hidden; display_type} = md in
+    let {id; doc; decl; defn; type_;
+         expansion; canonical; hidden; display_type} =
+      md
+    in
     let id' = self#identifier_module id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let type' = self#module_decl type_ in
-    let expansion' = option_map self#module_expansion expansion in
+    let expansion' = self#module_expansion expansion in
     let canonical' =
       option_map (pair_map self#path_module self#reference_module) canonical
     in
     let hidden' = self#module_hidden hidden in
     let display_type' = option_map self#module_decl display_type in
-      if id != id' || doc != doc' || type_ != type'
-         || expansion != expansion' || canonical != canonical'
-         || hidden != hidden' || display_type != display_type'
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || type_ != type' || expansion != expansion'
+         || canonical != canonical' || hidden != hidden'
+         || display_type != display_type'
       then
-        {id = id'; doc = doc'; type_ = type'; expansion = expansion';
-         canonical = canonical'; hidden = hidden'; display_type = display_type'}
+        {id = id'; doc = doc'; type_ = type'; decl = decl'; defn = defn';
+         expansion = expansion'; canonical = canonical'; hidden = hidden';
+         display_type = display_type'}
       else md
 
   method module_equation eq =
@@ -1238,6 +1302,12 @@ class virtual ['a] module_type = object (self)
 
   method virtual fragment_type :
     'a Fragment.type_ -> 'a Fragment.type_
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
@@ -1317,21 +1387,27 @@ class virtual ['a] module_type = object (self)
     | Some { FunctorArgument. id; expr; expansion } ->
         let id' = self#identifier_module id in
         let expr' = self#module_type_expr expr in
-        let expansion' = option_map self#module_expansion expansion in
+        let expansion' = self#module_expansion expansion in
           if id != id' || expr != expr' || expansion != expansion' then
             Some {FunctorArgument. id = id'; expr = expr'; expansion = expansion'}
           else arg
 
   method module_type mty =
     let open ModuleType in
-    let {id; doc; expr; expansion} = mty in
+    let {id; doc; decl; defn; expr; expansion} = mty in
     let id' = self#identifier_module_type id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let expr' = option_map self#module_type_expr expr in
-    let expansion' = option_map self#module_expansion expansion in
-      if id != id' || doc != doc' || expr != expr' || expansion != expansion' then
-        {id = id'; doc = doc'; expr = expr'; expansion = expansion'}
-      else mty
+    let expansion' = self#module_expansion expansion in
+      if id != id' || doc != doc' || decl != decl' || defn != defn'
+         || expr != expr' || expansion != expansion'
+      then
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         expr = expr'; expansion = expansion'}
+      else
+        mty
 end
 
 class virtual ['a] signature = object (self)
@@ -1440,7 +1516,7 @@ class virtual ['a] include_ = object (self)
 
   method include_expansion expn =
     let open Include in
-    let {resolved; content} = expn in
+    let {resolved; content; decl_map} = expn in
     let resolved' = self#include_expansion_resolved resolved in
     let content' = self#signature content in
       if content != content' || resolved != resolved' then
@@ -2213,6 +2289,188 @@ class virtual ['a] unit = object (self)
 
 end
 
+class virtual ['a] source = object
+
+  method virtual path_module :
+    'a Path.module_ -> 'a Path.module_
+
+  method virtual path_module_type :
+    'a Path.module_type -> 'a Path.module_type
+
+  method virtual path_type :
+    'a Path.type_ -> 'a Path.type_
+
+  method virtual path_class_type :
+    'a Path.class_type -> 'a Path.class_type
+
+  method virtual reference_constructor :
+    'a Reference.constructor -> 'a Reference.constructor
+
+  method virtual reference_field :
+    'a Reference.field -> 'a Reference.field
+
+  method virtual reference_value :
+    'a Reference.value -> 'a Reference.value
+
+  method virtual reference_class :
+    'a Reference.class_ -> 'a Reference.class_
+
+  method virtual reference_method :
+    'a Reference.method_ -> 'a Reference.method_
+
+  method virtual reference_instance_variable :
+    'a Reference.instance_variable -> 'a Reference.instance_variable
+
+  method virtual declaration :
+    'a Declaration.t -> 'a Declaration.t
+
+  method virtual definition :
+    'a Definition.t -> 'a Definition.t
+
+  method source_file_name name = name
+
+  method source_file_build_dir dir = dir
+
+  method source_file_digest digest = digest
+
+  method source_file file =
+    let open Source.File in
+    let {name; build_dir; digest} = file in
+    let name' = self#source_file_name name in
+    let build_dir' = self#source_file_build_dir build_dir in
+    let digest' = self#source_file_digest digest in
+      if name != name' || build_dir != build_dir' || digest != digest' then
+        {name = name'; build_dir = build_dir'; digest = digest'}
+      else file
+
+  method source_position_line line = line
+
+  method source_position_column column = column
+
+  method source_position position =
+    let open Source.Position in
+    let {line; column} = position in
+    let line' = self#source_position_line line in
+    let column' = self#source_position_column column in
+      if line != line' || column != column' then
+        {line = line'; column = column'}
+      else position
+
+  method source_location location =
+    let open Source.Location in
+    let {start; finish} = location in
+    let start' = self#source_position start in
+    let finish' = self#source_position finish in
+      if start != start' || finish != finish' then
+        {start = start'; finish = finish'}
+      else location
+
+  method source_use_path use_path =
+     let open Source.Use in
+      match use_path with
+      | Module p ->
+          let p' = self#path_module p in
+          if p != p' then Module p'
+          else use_path
+      | Module_type p ->
+          let p' = self#path_module_type p in
+          if p != p' then Module_type p'
+          else use_path
+      | Type p ->
+          let p' = self#path_type p in
+          if p != p' then Type p'
+          else use_path
+      | Constructor r ->
+          let r' = self#reference_constructor r in
+          if r != r' then Constructor r'
+          else use_path
+      | Field r ->
+          let p' = self#reference_field p in
+          if p != p' then Field p'
+          else use_path
+      | Value r ->
+          let p' = self#reference_value p in
+          if p != p' then Value p'
+          else use_path
+      | Class r ->
+          let p' = self#reference_class p in
+          if p != p' then Class p'
+          else use_path
+      | Class_type p ->
+          let p' = self#path_class_type p in
+          if p != p' then Class_type p'
+          else use_path
+      | Method r ->
+          let r' = self#reference_method r in
+          if r != r' then Method r'
+          else use_path
+      | Instance_variable r ->
+          let r' = self#reference_instance_variable r in
+          if r != r' then Instance_variable r'
+          else use_path
+
+  method source_use use =
+    let open Source.Use in
+    let {path; location} = use in
+    let path' = self#source_use_path path in
+    let location' = self#source_location location in
+      if path != path' || location != location' then
+        {path = path'; location = location'}
+      else use
+
+  method source_declaration declaration =
+    let open Source.Declaration in
+    let {index; location} = declaration in
+    let index' = self#declaration_index index in
+    let location' = self#source_location location in
+      if index != index' || location != location' then
+        {index = index'; location = location'}
+      else declaration
+
+  method source_definition definition =
+    let open Source.Definition in
+    let {index; location} = definition in
+    let index' = self#definition_index index in
+    let location' = self#source_location location in
+      if index != index' || location != location' then
+        {index = index'; location = location'}
+      else definition
+
+  method source_interface interface =
+    let open Source.Interface in
+    let {file; uses; declarations} = interface in
+    let file' = self#source_file file in
+    let uses' = list_map self#source_use uses in
+    let declarations' = list_map self#source_declaration uses in
+      if file != file' || uses != uses' || declarations != declarations' then
+        {file = file'; uses = uses'; declarations = declarations'}
+      else interface
+
+  method source_implementation implementation =
+    let open Source.Implementation in
+    let {file; uses; definitions} = implementation in
+    let file' = self#source_file file in
+    let uses' = list_map self#source_use uses in
+    let definitions' = list_map self#source_definition uses in
+      if file != file' || uses != uses' || definitions != definitions' then
+        {file = file'; uses = uses'; definitions = definitions'}
+      else implementation
+
+  method source source =
+    let open Source in
+    let {interface; implementation} = source in
+    let interface' = option_map self#source_interface interface in
+    let implementation' =
+      option_map self#source_implementation implementation
+    in
+      if interface != interface' || implementation != implementation' then
+        {interface = interface'; implementation = implementation'}
+      else source
+
+  inherit ['a] Source.Decl.map
+
+end
+
 class virtual ['a] page = object (self)
 
   method virtual identifier_page :
@@ -2254,5 +2512,6 @@ class virtual ['a] types = object
   inherit ['a] instance_variable
   inherit ['a] type_expr
   inherit ['a] unit
+  inherit ['a] source
   inherit ['a] page
 end

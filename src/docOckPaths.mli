@@ -766,3 +766,49 @@ module rec Reference : sig
 
   val sexp_of_t : ('a -> sexp) -> ('a, _) t -> sexp
 end
+
+module Defn : sig
+
+  module Index : sig
+
+    type t
+
+    type allocator
+
+    val allocator : unit -> allocator
+
+    val allocate : allocator -> t
+
+    val to_string : t -> string
+
+  end
+
+  type 'a t =
+    { root: 'a;
+      name: string;
+      index : Index.t; }
+
+end
+
+module Decl : sig
+
+  module Index : sig
+
+    type t
+
+    type allocator
+
+    val allocator : unit -> allocator
+
+    val allocate : allocator -> t
+
+    val to_string : t -> string
+
+  end
+
+  type 'a t =
+    { root: 'a;
+      name: string;
+      index : Index.t; }
+
+end

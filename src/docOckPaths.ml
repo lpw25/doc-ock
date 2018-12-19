@@ -2256,3 +2256,53 @@ module Reference = struct
   let hash ~hash p = hash_reference hash p
 
 end
+
+module Defn = struct
+
+  module Index = struct
+
+    type t = int
+
+    type allocator = int ref
+
+    let allocator () = ref 0
+
+    let allocate a =
+      incr a;
+      !a
+
+    let to_string t = string_of_int t
+
+  end
+
+  type 'a t =
+    { root: 'a;
+      name: string;
+      index : Index.t; }
+
+end
+
+module Decl = struct
+
+  module Index = struct
+
+    type t = int
+
+    type allocator = int ref
+
+    let allocator () = ref 0
+
+    let allocate a =
+      incr a;
+      !a
+
+    let to_string t = string_of_int t
+
+  end
+
+  type 'a t =
+    { root: 'a;
+      name: string;
+      index : Index.t; }
+
+end

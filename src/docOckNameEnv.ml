@@ -462,11 +462,11 @@ let rec add_module_type_expr_items expr env =
       add_module_ident id
         (add_module_type_expr_items expr env)
     | With(expr, _) -> add_module_type_expr_items expr env
-    | TypeOf decl -> add_module_decl_items decl env
+    | TypeOf expr -> add_module_expr_items expr env
 
-and add_module_decl_items decl env =
+and add_module_expr_items expr env =
   let open Module in
-    match decl with
+    match expr with
     | Alias _ -> env
     | ModuleType expr -> add_module_type_expr_items expr env
 
@@ -516,11 +516,11 @@ let add_class_type_expr_items expr env =
     | Constr _ -> env
     | Signature clsig -> add_class_signature_items clsig env
 
-let rec add_class_decl_items decl env =
+let rec add_class_expr_items expr env =
   let open Class in
-    match decl with
+    match expr with
     | ClassType expr -> add_class_type_expr_items expr env
-    | Arrow(_, _, decl) -> add_class_decl_items decl env
+    | Arrow(_, _, expr) -> add_class_expr_items expr env
 
 open DocOckPaths.Reference.Resolved
 open DocOckPaths.Reference
