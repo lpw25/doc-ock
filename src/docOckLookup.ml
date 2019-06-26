@@ -30,6 +30,10 @@ class ['a] lookup = object
   method identifier x = x
   method fragment_type x = x
   method fragment_module x = x
+  method decl_index x = x
+  method defn_index x = x
+  method decl x = x
+  method defn x = x
 
   method reference_module x =
     lookup_module env x
@@ -64,7 +68,7 @@ class ['a] lookup = object
 
   method! module_ md =
     let open Module in
-    let env = add_module_decl_items md.type_ env in
+    let env = add_module_expr_items md.expr env in
     let this = {< env = env >} in
       this#super_module md
 
@@ -104,7 +108,7 @@ class ['a] lookup = object
 
   method! class_ cl =
     let open Class in
-    let env = add_class_decl_items cl.type_ env in
+    let env = add_class_expr_items cl.expr env in
     let this = {< env = env >} in
       this#super_class cl
 

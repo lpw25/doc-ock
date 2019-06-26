@@ -45,15 +45,13 @@ module Use = struct
 
   type 'a path =
     | Module of 'a Path.module_
-    | Module_type of 'a Path.module_type
+    | ModuleType of 'a Path.module_type
     | Type of 'a Path.type_
     | Constructor of 'a Reference.constructor
     | Field of 'a Reference.field
     | Value of 'a Reference.value
     | Class of 'a Reference.class_
-    | Class_type of 'a Path.class_type
-    | Method of 'a Reference.method_
-    | Instance_variable of 'a Reference.instance_variable
+    | ClassType of 'a Path.class_type
 
   type 'a t =
     { path: 'a path;
@@ -101,13 +99,13 @@ type 'a t =
 
 module SMap = Map.Make(String)
 
-module Decl_map = struct
+module Defn_map = struct
 
   module Type = struct
 
     type 'a t =
-      { constructors : 'a Decl.t SMap.t;
-        fields : 'a Decl.t SMap.t; }
+      { constructors : 'a Defn.t SMap.t;
+        fields : 'a Defn.t SMap.t; }
 
     let empty =
       let constructors = SMap.empty in
@@ -118,12 +116,20 @@ module Decl_map = struct
       SMap.is_empty t.constructors
       && SMap.is_empty t.fields
 
-    let add_constructor t name decl =
-      let constructors = SMap.add name decl t.constructors in
+    let add_constructor t name defn =
+      let constructors = SMap.add name defn t.constructors in
       { t with constructors }
 
-    let add_field t name decl =
-      let fields = SMap.add name decl t.fields in
+    let add_field t name defn =
+      let fields = SMap.add name defn t.fields in
+      { t with fields }
+
+    let remove_constructor t name =
+      let constructors = SMap.remove name t.constructors in
+      { t with constructors }
+
+    let remove_field t name =
+      let fields = SMap.remove name t.fields in
       { t with fields }
 
     let project_constructor t name =
@@ -134,11 +140,11 @@ module Decl_map = struct
 
   end
 
-  module Class_signature = struct
+  module Class = struct
 
     type 'a t =
-      { methods : 'a Decl.t SMap.t;
-        instance_variables : 'a Decl.t SMap.t; }
+      { methods : 'a Defn.t SMap.t;
+        instance_variables : 'a Defn.t SMap.t; }
 
     let empty =
       let methods = SMap.empty in
@@ -149,12 +155,20 @@ module Decl_map = struct
       SMap.is_empty t.methods
       && SMap.is_empty t.instance_variables
 
-    let add_method t name decl =
-      let methods = SMap.add name decl t.methods in
+    let add_method t name defn =
+      let methods = SMap.add name defn t.methods in
       { t with methods }
 
-    let add_instance_variable t name decl =
-      let instance_variables = SMap.add name decl t.instance_variables in
+    let add_instance_variable t name defn =
+      let instance_variables = SMap.add name defn t.instance_variables in
+      { t with instance_variables }
+
+    let remove_method t name =
+      let methods = SMap.remove name t.methods in
+      { t with methods }
+
+    let remove_instance_variable t name =
+      let instance_variables = SMap.remove name t.instance_variables in
       { t with instance_variables }
 
     let project_method t name =
@@ -165,71 +179,115 @@ module Decl_map = struct
 
   end
 
-  module Signature = struct
+  module Module = struct
 
     type 'a t =
-      { modules : ('a Decl.t * 'a t) SMap.t;
-        module_types : ('a Decl.t * 'a t) SMap.t;
-        types : ('a Decl.t * 'a Type.t) SMap.t;
-        extensions : 'a Decl.t SMap.t;
-        classes : ('a Decl.t * 'a Class_signature.t) SMap.t;
-        class_types : ('a Decl.t * 'a Class_signature.t) SMap.t; }
+      { modules : ('a Defn.t * 'a t) SMap.t;
+        module_types : 'a Defn.t SMap.t;
+        types : ('a Defn.t * 'a Type.t) SMap.t;
+        extensions : 'a Defn.t SMap.t;
+        values : 'a Defn.t SMap.t;
+        classes : ('a Defn.t * 'a Class.t) SMap.t;
+        class_types : 'a Defn.t SMap.t; }
 
     let empty =
       let modules = SMap.empty in
       let module_types = SMap.empty in
       let types = SMap.empty in
       let extensions = SMap.empty in
+      let values = SMap.empty in
       let classes = SMap.empty in
       let class_types = SMap.empty in
-      { modules; module_types; types; extensions; classes; class_types }
+      { modules; module_types; types; extensions; values; classes; class_types }
 
     let is_empty t =
       SMap.is_empty t.modules
       && SMap.is_empty t.module_types
       && SMap.is_empty t.types
       && SMap.is_empty t.extensions
+      && SMap.is_empty t.values
       && SMap.is_empty t.classes
       && SMap.is_empty t.class_types
 
-    let add_module t name decl md =
-      let modules = SMap.add name (decl, md) t.modules in
+    let add_module t name defn md =
+      let modules = SMap.add name (defn, md) t.modules in
       { t with modules }
 
-    let add_module_type t name decl mty =
-      let module_types = SMap.add name (decl, mty) t.module_types in
+    let add_module_type t name defn =
+      let module_types = SMap.add name defn t.module_types in
       { t with module_types }
 
-    let add_type t name decl ty =
-      let types = SMap.add name (decl, ty) t.types in
+    let add_type t name defn ty =
+      let types = SMap.add name (defn, ty) t.types in
       { t with types }
 
-    let add_extension t name decl =
-      let extensions = SMap.add name decl t.extensions in
+    let add_extension t name defn =
+      let extensions = SMap.add name defn t.extensions in
       { t with extensions }
 
-    let add_class t name decl cl =
-      let classes = SMap.add name (decl, cl) t.classes in
+    let add_value t name defn =
+      let values = SMap.add name defn t.values in
+      { t with values }
+
+    let add_class t name defn cl =
+      let classes = SMap.add name (defn, cl) t.classes in
       { t with classes }
 
-    let add_class_type t name decl cty =
-      let class_types = SMap.add name (decl, cty) t.class_types in
+    let add_class_type t name defn =
+      let class_types = SMap.add name defn t.class_types in
+      { t with class_types }
+
+    let remove_module t name =
+      let modules = SMap.remove name t.modules in
+      { t with modules }
+
+    let remove_module_type t name =
+      let module_types = SMap.remove name t.module_types in
+      { t with module_types }
+
+    let remove_type t name =
+      let types = SMap.remove name t.types in
+      { t with types }
+
+    let remove_extension t name =
+      let extensions = SMap.remove name t.extensions in
+      { t with extensions }
+
+    let remove_value t name =
+      let values = SMap.remove name t.values in
+      { t with values }
+
+    let remove_class t name =
+      let classes = SMap.remove name t.classes in
+      { t with classes }
+
+    let remove_class_type t name =
+      let class_types = SMap.remove name t.class_types in
       { t with class_types }
 
     let project_module t name =
-      SMap.find_opt name t.modules
+      match SMap.find name t.modules with
+      | (defn, t) -> Some defn, t
+      | exception Not_found -> None, empty
 
     let project_module_type t name =
       SMap.find_opt name t.module_types
 
     let project_type t name =
-      SMap.find_opt name t.types
+      match SMap.find name t.types with
+      | (defn, t) -> Some defn, t
+      | exception Not_found -> None, Type.empty
 
     let project_extension t name =
       SMap.find_opt name t.extensions
 
+    let project_value t name =
+      SMap.find_opt name t.values
+
     let project_class t name =
-      SMap.find_opt name t.classes
+      match SMap.find name t.classes with
+      | (defn, t) -> Some defn, t
+      | exception Not_found -> None, Class.empty
 
     let project_class_type t name =
       SMap.find_opt name t.class_types
@@ -245,65 +303,59 @@ module Decl_map = struct
 
   class virtual ['a] map = object (self)
 
-    method virtual decl : 'a Decl.t -> 'a Decl.t
+    method virtual defn : 'a Defn.t -> 'a Defn.t
 
-    method source_decl_map_signature signature =
-      let open Signature in
-      let {modules; module_types; types; extensions; classes; class_types} =
-        signature
+    method source_defn_map_module module_ =
+      let open Module in
+      let {modules; module_types; types;
+           extensions; values; classes; class_types} =
+        module_
       in
       let modules' =
         SMap.map
-          (pair_map self#decl self#source_decl_map_signature)
+          (pair_map self#defn self#source_defn_map_module)
           modules
       in
-      let module_types' =
-        SMap.map
-          (pair_map self#decl self#source_decl_map_signature)
-          module_types
-      in
+      let module_types' = SMap.map self#defn module_types in
       let types' =
-        SMap.map (pair_map self#decl self#source_decl_map_type) types
+        SMap.map (pair_map self#defn self#source_defn_map_type) types
       in
-      let extensions' = SMap.map self#decl extensions in
+      let extensions' = SMap.map self#defn extensions in
+      let values' = SMap.map self#defn values in
       let classes' =
         SMap.map
-          (pair_map self#decl self#source_decl_map_class_signature)
+          (pair_map self#defn self#source_defn_map_class)
           classes
       in
-      let class_types' =
-        SMap.map
-          (pair_map self#decl self#source_decl_map_class_signature)
-          class_types
-      in
+      let class_types' = SMap.map self#defn class_types in
         if
           modules != modules' || module_types != module_types'
-          || types != types' || extensions != extensions'
+          || types != types' || extensions != extensions' || values != values'
           || classes != classes' || class_types != class_types'
         then
           {modules = modules'; module_types = module_types';
-           types = types'; extensions = extensions';
+           types = types'; extensions = extensions'; values = values';
            classes = classes'; class_types = class_types'}
         else
-          signature
+          module_
 
-    method source_decl_map_class_signature class_signature =
-      let open Class_signature in
-      let {methods; instance_variables} = class_signature in
-      let methods' = SMap.map self#decl methods in
-      let instance_variables' = SMap.map self#decl instance_variables in
+    method source_defn_map_class class_ =
+      let open Class in
+      let {methods; instance_variables} = class_ in
+      let methods' = SMap.map self#defn methods in
+      let instance_variables' = SMap.map self#defn instance_variables in
         if
           methods != methods' || instance_variables != instance_variables'
         then
           {methods = methods'; instance_variables = instance_variables'}
         else
-          class_signature
+          class_
 
-    method source_decl_map_type type_ =
+    method source_defn_map_type type_ =
       let open Type in
       let {constructors; fields} = type_ in
-      let constructors' = SMap.map self#decl constructors in
-      let fields' = SMap.map self#decl fields in
+      let constructors' = SMap.map self#defn constructors in
+      let fields' = SMap.map self#defn fields in
         if constructors != constructors' || fields != fields' then
           {constructors = constructors'; fields = fields'}
         else type_

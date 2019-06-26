@@ -14,6 +14,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+val read_implementation_defs_and_uses :
+  root:'a -> name:string -> file:string -> Typedtree.structure ->
+  DocOckSource.Definition.t list
+  * 'a DocOckSource.Use.t list
+  * 'a DocOckSource.Defn_map.Module.t
+
 val read_implementation: 'a -> string -> Typedtree.structure ->
   'a DocOckPaths.Identifier.module_ *
   'a DocOckTypes.Documentation.t *

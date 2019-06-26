@@ -282,14 +282,14 @@ class ['a] strengthen path : ['a] t = object
     if Path.Resolved.is_hidden path then md
     else begin
       let open Module in
-      match md.type_ with
+      match md.expr with
       | Alias p when not (Path.is_hidden p) -> md
       | _ ->
           let name = Identifier.name md.id in
           let path = Path.Resolved(Path.Resolved.Module(path, name)) in
-          let type_ = Alias path in
-          let expansion = None in
-          { md with type_; expansion }
+          let expr = Alias path in
+          let expansion = NotYetExpanded Source.Defn_map.Signature.empty in
+          { md with expr; expansion }
     end
 
   method! module_type x = x

@@ -26,7 +26,7 @@ module Source = DocOckSource
 module rec Module : sig
 
   type 'a expansion =
-    | Not_yet_expanded of 'a Source.Decl_map.Signature.t
+    | NotYetExpanded of 'a Source.Defn_map.Module.t
     | AlreadyASig
     | Signature of 'a Signature.t
     | Functor of 'a FunctorArgument.t option list * 'a Signature.t
@@ -118,7 +118,7 @@ and Include : sig
   type 'a expansion = {
     resolved: bool;
     content: 'a Signature.t;
-    decl_map: 'a Source.Decl_map.Signature.t;
+    defn_map: 'a Source.Defn_map.Module.t;
   }
 
   type 'a t =
@@ -271,7 +271,7 @@ end = External
 and Class : sig
 
   type 'a expansion =
-    | Not_yet_expanded of 'a Source.Decl_map.Class_signature.t
+    | NotYetExpanded of 'a Source.Defn_map.Class.t
     | AlreadyASig
     | Signature of 'a ClassSignature.t
 
@@ -451,7 +451,7 @@ module rec Unit : sig
     | Pack of 'a Packed.t
 
   type 'a expansion =
-    | Not_expanded_yet
+    | NotYetExpanded
     | AlreadyASig
     | Signature of 'a Signature.t
 

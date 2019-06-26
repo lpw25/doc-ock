@@ -29,6 +29,161 @@ let opt_map f = function
   | None -> None
   | Some x -> Some (f x)
 
+let rec read_module_use_path = function
+  | OcamlPath.Pident id ->
+      if Ident.persistent id then Path.Root (Ident.name id)
+      else raise Not_found
+  | OcamlPath.Pdot(p, s, _) ->
+      Path.Dot(read_module_use_path p, s)
+  | OcamlPath.Papply(p, arg) ->
+      Path.Apply(read_module_use_path p, read_module_use_path arg)
+
+let read_module_type_use_path = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) -> Path.Dot(read_module_use_path p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let read_class_type_use_path = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) -> Path.Dot(read_module_use_path p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let read_type_use_path = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) -> Path.Dot(read_module_use_path p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let rec read_module_use_reference = function
+  | OcamlPath.Pident id ->
+      if Ident.persistent id then
+        Reference.Root (Ident.name id, TModule)
+      else raise Not_found
+  | OcamlPath.Pdot(p, s, _) ->
+      Module(read_module_use_reference p, s)
+  | OcamlPath.Papply(_, _) -> raise Not_found
+
+let read_module_type_use_reference = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) ->
+      Reference.ModuleType(read_module_use_reference p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let read_type_use_reference = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) ->
+      Reference.Type(read_module_use_reference p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let read_value_use_reference = function
+  | OcamlPath.Pident id -> raise Not_found
+  | OcamlPath.Pdot(p, s, _) ->
+      Reference.Value(read_module_use_reference p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let read_class_use_reference = function
+ | OcamlPath.Pident id -> raise Not_found
+ | OcamlPath.Pdot(p, s, _) ->
+     Reference.Class(read_module_use_reference p, s)
+  | OcamlPath.Papply(_, _)-> assert false
+
+let add_module_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_module_use_path path with
+      | use_path ->
+          let path = Use.Module use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
+let add_module_type_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_module_type_use_path path with
+      | use_path ->
+          let path = Use.ModuleType use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
+let add_type_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_type_use_path path with
+      | use_path ->
+          let path = Use.Type use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
+let add_constructor_use file lid desc uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      let res = Btype.repr desc.cstr_res in
+      match res with
+      | Tconstr(path, _, _) -> begin
+          match read_type_use_reference path with
+          | use_path ->
+              let path = Use.Constructor(use_path, desc.cstr_name) in
+              { path; location } :: uses
+          | exception Not_found -> uses
+        end
+      | _ -> uses
+    end
+
+let add_field_use file lid desc uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      let res = Btype.repr desc.lbl_res in
+      match res with
+      | Tconstr(path, _, _) -> begin
+          match read_type_use_reference path with
+          | use_path ->
+              let path = Use.Field(use_path, desc.lbl_name) in
+              { path; location } :: uses
+          | exception Not_found -> uses
+        end
+      | _ -> uses
+    end
+
+let add_value_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_value_use_reference path with
+      | use_path ->
+          let path = Use.Value use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
+let add_class_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_class_use_reference path with
+      | use_path ->
+          let path = Use.Class use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
+let read_class_type_use file lid path uses =
+  match read_location file lid.Location.loc with
+  | None -> uses
+  | Some location -> begin
+      match read_class_type_use_path path with
+      | use_path ->
+          let path = Use.ClassType use_path in
+          { path; location } :: uses
+      | exception Not_found -> uses
+    end
+
 let parenthesise name =
   match name with
   | "asr" | "land" | "lnot" | "lor" | "lsl" | "lsr"
@@ -213,19 +368,19 @@ let read_type_declaration env parent decl =
   let representation = read_type_kind env id decl.typ_kind in
     {id; doc; equation; representation}
 
-let read_type_declarations env parent decls =
+let read_type_declarations env parent tdecls =
   let container =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let items =
     List.fold_left
-      (fun acc decl ->
+      (fun acc tdecl ->
          let open Signature in
-         let comments = read_comments container decl.typ_attributes in
+         let comments = read_comments container tdecl.typ_attributes in
          let comments = List.map (fun com -> Comment com) comments in
-         let decl = read_type_declaration env parent decl in
-           (Type decl) :: (List.rev_append comments acc))
-      [] decls
+         let tdecl = read_type_declaration env parent tdecl in
+           (Type tdecl) :: (List.rev_append comments acc))
+      [] tdecls
   in
     List.rev items
 

@@ -45,15 +45,13 @@ module Use : sig
 
   type 'a path =
     | Module of 'a Path.module_
-    | Module_type of 'a Path.module_type
+    | ModuleType of 'a Path.module_type
     | Type of 'a Path.type_
     | Constructor of 'a Reference.constructor
     | Field of 'a Reference.field
     | Value of 'a Reference.value
     | Class of 'a Reference.class_
-    | Class_type of 'a Path.class_type
-    | Method of 'a Reference.method_
-    | Instance_variable of 'a Reference.instance_variable
+    | ClassType of 'a Path.class_type
 
   type 'a t =
     { path: 'a path;
@@ -99,7 +97,7 @@ type 'a t =
   { interface: 'a Interface.t option;
     implementation: 'a Implementation.t option; }
 
-module Decl_map : sig
+module Defn_map : sig
 
   module Type : sig
 
@@ -110,20 +108,20 @@ module Decl_map : sig
     val is_empty : 'a t -> bool
 
     val add_constructor :
-      'a t -> string -> 'a Decl.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val add_field :
-      'a t -> string -> 'a Decl.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val project_constructor :
-      'a t -> string -> 'a Decl.t option
+      'a t -> string -> 'a Defn.t option
 
     val project_field :
-      'a t -> string -> 'a Decl.t option
+      'a t -> string -> 'a Defn.t option
 
   end
 
-  module Class_signature : sig
+  module Class : sig
 
     type 'a t
 
@@ -132,20 +130,20 @@ module Decl_map : sig
     val is_empty : 'a t -> bool
 
     val add_method :
-      'a t -> string -> 'a Decl.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val add_instance_variable :
-      'a t -> string -> 'a Decl.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val project_method :
-      'a t -> string -> 'a Decl.t option
+      'a t -> string -> 'a Defn.t option
 
     val project_instance_variable :
-      'a t -> string -> 'a Decl.t option
+      'a t -> string -> 'a Defn.t option
 
   end
 
-  module Signature : sig
+  module Module : sig
 
     type 'a t
 
@@ -154,53 +152,79 @@ module Decl_map : sig
     val is_empty : 'a t -> bool
 
     val add_module :
-      'a t -> string -> 'a Decl.t -> 'a t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t -> 'a t
 
     val add_module_type :
-      'a t -> string -> 'a Decl.t -> 'a t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val add_type :
-      'a t -> string -> 'a Decl.t -> 'a Type.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a Type.t -> 'a t
 
     val add_extension :
-      'a t -> string -> 'a Decl.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
+
+    val add_value :
+      'a t -> string -> 'a Defn.t -> 'a t
 
     val add_class :
-      'a t -> string -> 'a Decl.t -> 'a Class_signature.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a Class.t -> 'a t
 
     val add_class_type :
-      'a t -> string -> 'a Decl.t -> 'a Class_signature.t -> 'a t
+      'a t -> string -> 'a Defn.t -> 'a t
+
+    val remove_module :
+      'a t -> string -> 'a t
+
+    val remove_module_type :
+      'a t -> string -> 'a t
+
+    val remove_type :
+      'a t -> string -> 'a t
+
+    val remove_extension :
+      'a t -> string -> 'a t
+
+    val remove_value :
+      'a t -> string -> 'a t
+
+    val remove_class :
+      'a t -> string -> 'a t
+
+    val remove_class_type :
+      'a t -> string -> 'a t
 
     val project_module :
-      'a t -> string -> ('a Decl.t * 'a t) option
+      'a t -> string -> 'a Defn.t option * 'a t
 
     val project_module_type :
-      'a t -> string -> ('a Decl.t * 'a t) option
+      'a t -> string -> 'a Defn.t option
 
     val project_type :
-      'a t -> string -> ('a Decl.t * 'a Type.t) option
+      'a t -> string -> 'a Defn.t option * 'a Type.t
 
     val project_extension :
-      'a t -> string -> 'a Decl.t option
+      'a t -> string -> 'a Defn.t option
+
+    val project_value :
+      'a t -> string -> 'a Defn.t option
 
     val project_class :
-      'a t -> string -> ('a Decl.t * 'a Class_signature.t) option
+      'a t -> string -> 'a Defn.t option * 'a Class.t
 
     val project_class_type :
-      'a t -> string -> ('a Decl.t * 'a Class_signature.t) option
+      'a t -> string -> 'a Defn.t option
 
   end
 
   class virtual ['a] map : object
 
-    method virtual decl : 'a Decl.t -> 'a Decl.t
+    method virtual defn : 'a Defn.t -> 'a Defn.t
 
-    method source_decl_map_type : 'a Type.t -> 'a Type.t
+    method source_defn_map_type : 'a Type.t -> 'a Type.t
 
-    method source_decl_map_class_signature :
-      'a Class_signature.t -> 'a Class_signature.t
+    method source_defn_map_class : 'a Class.t -> 'a Class.t
 
-    method source_decl_map_signature : 'a Signature.t -> 'a Signature.t
+    method source_defn_map_module : 'a Module.t -> 'a Module.t
 
   end
 

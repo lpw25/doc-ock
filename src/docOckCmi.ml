@@ -24,6 +24,7 @@ open DocOckTypes
 open DocOckAttrs
 
 module Env = DocOckIdentEnv
+module Source = DocOckSource
 
 let opt_map f = function
   | None -> None
@@ -494,10 +495,12 @@ let read_value_description env parent id vd =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id vd.val_attributes in
+  let decl = None in
+  let defn = None in
     mark_value_description vd;
     let type_ = read_type_expr env vd.val_type in
     match vd.val_kind with
-    | Val_reg -> Value {Value.id; doc; type_}
+    | Val_reg -> Value {Value.id; doc; decl; defn; type_}
     | Val_prim desc ->
         let primitives =
           let open Primitive in
@@ -507,7 +510,7 @@ let read_value_description env parent id vd =
             | name -> [ name ]
           )
         in
-          External {External.id; doc; type_; primitives}
+          External {External.id; doc; decl; defn; type_; primitives}
     | _ -> assert false
 
 let read_label_declaration env parent ld =
@@ -518,9 +521,11 @@ let read_label_declaration env parent ld =
     read_attributes (Identifier.label_parent_of_parent parent) id
       ld.ld_attributes
   in
+  let decl = None in
+  let defn = None in
   let mutable_ = (ld.ld_mutable = Mutable) in
   let type_ = read_type_expr env ld.ld_type in
-    {id; doc; mutable_; type_}
+    {id; doc; decl; defn; mutable_; type_}
 
 let read_constructor_declaration_arguments env parent arg =
   let open TypeDecl.Constructor in
@@ -537,12 +542,14 @@ let read_constructor_declaration env parent cd =
     Identifier.label_parent_of_parent (Identifier.parent_of_datatype parent)
   in
   let doc = read_attributes container id cd.cd_attributes in
+  let decl = None in
+  let defn = None in
   let args =
     read_constructor_declaration_arguments env
       (Identifier.parent_of_datatype parent) cd.cd_args
   in
   let res = opt_map (read_type_expr env) cd.cd_res in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
 let read_type_kind env parent =
   let open TypeDecl.Representation in function
@@ -590,36 +597,38 @@ let read_type_constraints env params =
        else acc)
     params []
 
-let read_type_declaration env parent id decl =
+let read_type_declaration env parent id tdecl =
   let open TypeDecl in
   let name = parenthesise (Ident.name id) in
   let id = Identifier.Type(parent, name) in
   let container = Identifier.label_parent_of_parent
                     (Identifier.parent_of_signature parent)
   in
-  let doc = read_attributes container id decl.type_attributes in
-  let params = mark_type_declaration decl in
-  let manifest = opt_map (read_type_expr env) decl.type_manifest in
+  let doc = read_attributes container id tdecl.type_attributes in
+  let decl = None in
+  let defn = None in
+  let params = mark_type_declaration tdecl in
+  let manifest = opt_map (read_type_expr env) tdecl.type_manifest in
   let constraints = read_type_constraints env params in
-  let representation = read_type_kind env id decl.type_kind in
+  let representation = read_type_kind env id tdecl.type_kind in
   let abstr =
-    match decl.type_kind with
+    match tdecl.type_kind with
       Type_abstract ->
-        decl.type_manifest = None || decl.type_private = Private
+        tdecl.type_manifest = None || tdecl.type_private = Private
     | Type_record _ ->
-        decl.type_private = Private
+        tdecl.type_private = Private
     | Type_variant tll ->
-        decl.type_private = Private ||
+        tdecl.type_private = Private ||
         List.exists (fun cd -> cd.cd_res <> None) tll
     | Type_open ->
-        decl.type_manifest = None
+        tdecl.type_manifest = None
   in
   let params =
-    List.map2 (read_type_parameter abstr) decl.type_variance params
+    List.map2 (read_type_parameter abstr) tdecl.type_variance params
   in
-  let private_ = (decl.type_private = Private) in
+  let private_ = (tdecl.type_private = Private) in
   let equation = Equation.{params; manifest; constraints; private_} in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
 let read_extension_constructor env parent id ext =
   let open Extension.Constructor in
@@ -629,12 +638,14 @@ let read_extension_constructor env parent id ext =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id ext.ext_attributes in
+  let decl = None in
+  let defn = None in
   let args =
     read_constructor_declaration_arguments env
       (Identifier.parent_of_signature parent) ext.ext_args
   in
   let res = opt_map (read_type_expr env) ext.ext_ret_type in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
 let read_type_extension env parent id ext rest =
   let open Extension in
@@ -652,9 +663,7 @@ let read_type_extension env parent id ext rest =
     List.map (read_type_parameter false Variance.null) type_params
   in
   let private_ = (ext.ext_private = Private) in
-    { type_path; type_params;
-      doc; private_;
-      constructors; }
+    { type_path; type_params; doc; private_; constructors; }
 
 let read_exception env parent id ext =
   let open Exception in
@@ -664,33 +673,39 @@ let read_exception env parent id ext =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id ext.ext_attributes in
-    mark_exception ext;
-    let args =
-      read_constructor_declaration_arguments env
-        (Identifier.parent_of_signature parent) ext.ext_args
-    in
-    let res = opt_map (read_type_expr env) ext.ext_ret_type in
-      {id; doc; args; res}
+  let decl = None in
+  let defn = None in
+  mark_exception ext;
+  let args =
+    read_constructor_declaration_arguments env
+      (Identifier.parent_of_signature parent) ext.ext_args
+  in
+  let res = opt_map (read_type_expr env) ext.ext_ret_type in
+  {id; doc; decl; defn; args; res}
 
 let read_method env parent concrete (name, kind, typ) =
   let open Method in
   let name = parenthesise name in
   let id = Identifier.Method(parent, name) in
   let doc = empty in
+  let decl = None in
+  let defn = None in
   let private_ = (Btype.field_kind_repr kind) <> Fpresent in
   let virtual_ = not (Concr.mem name concrete) in
   let type_ = read_type_expr env typ in
-    ClassSignature.Method {id; doc; private_; virtual_; type_}
+    ClassSignature.Method {id; doc; decl; defn; private_; virtual_; type_}
 
 let read_instance_variable env parent (name, mutable_, virtual_, typ) =
   let open InstanceVariable in
   let name = parenthesise name in
   let id = Identifier.InstanceVariable(parent, name) in
   let doc = empty in
+  let decl = None in
+  let defn = None in
   let mutable_ = (mutable_ = Mutable) in
   let virtual_ = (virtual_ = Virtual) in
   let type_ = read_type_expr env typ in
-    ClassSignature.InstanceVariable {id; doc; mutable_; virtual_; type_}
+    ClassSignature.InstanceVariable {id; doc; decl; defn; mutable_; virtual_; type_}
 
 let read_self_type sty =
   let sty = Btype.repr sty in
@@ -767,17 +782,22 @@ let read_class_type_declaration env parent id cltd =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id cltd.clty_attributes in
-    mark_class_type_declaration cltd;
-    let params =
-      List.map2
-        (read_type_parameter false)
-        cltd.clty_variance cltd.clty_params
-    in
-    let expr =
-      read_class_signature env id cltd.clty_params cltd.clty_type
-    in
-    let virtual_ = read_virtual cltd.clty_type in
-    { id; doc; virtual_; params; expr; expansion = None }
+  let decl = None in
+  let defn = None in
+  mark_class_type_declaration cltd;
+  let params =
+    List.map2
+      (read_type_parameter false)
+      cltd.clty_variance cltd.clty_params
+  in
+  let expr =
+    read_class_signature env id cltd.clty_params cltd.clty_type
+  in
+  let virtual_ = read_virtual cltd.clty_type in
+  let expansion =
+    Class.NotYetExpanded Source.Defn_map.Class_signature.empty
+  in
+  { id; doc; decl; defn; virtual_; params; expr; expansion }
 
 let rec read_class_type env parent params =
   let open Class in function
@@ -805,17 +825,20 @@ let read_class_declaration env parent id cld =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id cld.cty_attributes in
-    mark_class_declaration cld;
-    let params =
-      List.map2
-        (read_type_parameter false)
-        cld.cty_variance cld.cty_params
-    in
-    let type_ =
-      read_class_type env id cld.cty_params cld.cty_type
-    in
-    let virtual_ = cld.cty_new = None in
-    { id; doc; virtual_; params; type_; expansion = None }
+  let decl = None in
+  let defn = None in
+  mark_class_declaration cld;
+  let params =
+    List.map2
+      (read_type_parameter false)
+      cld.cty_variance cld.cty_params
+  in
+  let expr =
+    read_class_type env id cld.cty_params cld.cty_type
+  in
+  let virtual_ = cld.cty_new = None in
+  let expansion = NotYetExpanded Source.Defn_map.Class_signature.empty in
+  { id; doc; decl; defn; virtual_; params; expr; expansion }
 
 let rec read_module_type env parent pos mty =
   let open ModuleType in
@@ -832,8 +855,8 @@ let rec read_module_type env parent pos mty =
               let arg = read_module_type env id 1 arg in
               let expansion =
                 match arg with
-                | Signature _ -> Some Module.AlreadyASig
-                | _ -> None
+                | Signature _ -> Module.AlreadyASig
+                | _ -> Module.NotYetExpanded Source.Defn_map.Signature.empty
               in
                 Some { FunctorArgument. id; expr = arg; expansion }
         in
@@ -850,13 +873,15 @@ and read_module_type_declaration env parent id mtd =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id mtd.mtd_attributes in
+  let decl = None in
+  let defn = None in
   let expr = opt_map (read_module_type env id 1) mtd.mtd_type in
   let expansion =
     match expr with
-    | Some (Signature _) -> Some Module.AlreadyASig
-    | _ -> None
+    | Some (Signature _) -> Module.AlreadyASig
+    | _ -> Module.NotYetExpanded Source.Defn_map.Signature.empty
   in
-    {id; doc; expr; expansion}
+    {id; doc; decl; defn; expr; expansion}
 
 and read_module_declaration env parent ident md =
   let open Module in
@@ -866,6 +891,8 @@ and read_module_declaration env parent ident md =
     Identifier.label_parent_of_parent (Identifier.parent_of_signature parent)
   in
   let doc = read_attributes container id md.md_attributes in
+  let decl = None in
+  let defn = None in
   let canonical =
     let open Documentation in
     match doc with
@@ -877,7 +904,7 @@ and read_module_declaration env parent ident md =
       end
     | _ -> None
   in
-  let type_ =
+  let expr =
     match md.md_type with
 #if OCAML_MAJOR = 4 && OCAML_MINOR < 04
     | Mty_alias p -> Alias (Env.Path.read_module env p)
@@ -892,11 +919,12 @@ and read_module_declaration env parent ident md =
     | None -> contains_double_underscore (Ident.name ident)
   in
   let expansion =
-    match type_ with
-    | ModuleType (ModuleType.Signature _) -> Some AlreadyASig
-    | _ -> None
+    match expr with
+    | ModuleType (ModuleType.Signature _) -> AlreadyASig
+    | _ -> NotYetExpanded Source.Defn_map.Signature.empty
   in
-    {id; doc; type_; expansion; canonical; hidden; display_type = None}
+  let display_expr = None in
+    {id; doc; decl; defn; expr; expansion; canonical; hidden; display_expr}
 
 and read_signature env parent items =
   let env = Env.add_signature_type_items parent items env in

@@ -1842,6 +1842,11 @@ class ['a] resolver ?equal ?hash lookup_unit fetch_unit lookup_page fetch_page =
     method identifier_signature x = x
     method identifier x = x
 
+    method defn_index x = x
+    method decl_index x = x
+    method defn x = x
+    method decl x = x
+
     method path_module x = resolve_module_path where_am_i tbl x
     method path_module_type x = resolve_module_type_path where_am_i tbl x
     method path_type x = resolve_type_path where_am_i tbl x
@@ -1849,38 +1854,46 @@ class ['a] resolver ?equal ?hash lookup_unit fetch_unit lookup_page fetch_page =
 
     method! module_ md =
       let open Module in
-      let {id; doc; type_; expansion; canonical;display_type;hidden} = md in
+      let {id; doc; decl; defn; expr; expansion;
+           canonical; display_expr; hidden} = md
+      in
       let id' = self#identifier_module id in
       let sig_id = Identifier.signature_of_module id' in
       let self = {< where_am_i = Some sig_id >} in
       let doc' = self#documentation doc in
-      let type' = self#module_decl_with_id sig_id type_ in
-      let expansion' = DocOckMaps.option_map self#module_expansion expansion in
+      let decl' = DocOckMaps.option_map self#decl decl in
+      let defn' = DocOckMaps.option_map self#defn defn in
+      let expr' = self#module_expr_with_id sig_id expr in
+      let expansion' = self#module_expansion expansion in
       let canonical' =
         DocOckMaps.option_map
           (DocOckMaps.pair_map self#path_module self#reference_module)
           canonical
       in
-      let display_type' =
-        DocOckMaps.option_map (self#module_decl_with_id sig_id) display_type
+      let display_expr' =
+        DocOckMaps.option_map (self#module_expr_with_id sig_id) display_expr
       in
       let hidden' = self#module_hidden hidden in
-        if id != id' || doc != doc' || type_ != type'
-          || expansion != expansion' || canonical != canonical'
-          || display_type != display_type'
+        if id != id' || doc != doc' || decl != decl'  || defn != defn'
+           || expr != expr' || expansion != expansion'
+           || canonical != canonical' || display_expr != display_expr'
+           || hidden != hidden'
         then
-          {id = id'; doc = doc'; type_ = type';
-          expansion = expansion'; canonical = canonical';
-          display_type = display_type'; hidden = hidden'}
+          {id = id'; doc = doc'; decl = decl'; defn = defn';
+           expr = expr'; expansion = expansion';
+           canonical = canonical'; display_expr = display_expr';
+           hidden = hidden'}
         else md
 
     method! module_type mty =
       let open ModuleType in
-      let {id; doc; expr; expansion} = mty in
+      let {id; doc; decl; defn; expr; expansion} = mty in
       let id' = self#identifier_module_type id in
       let sig_id = Identifier.signature_of_module_type id' in
       let self = {< where_am_i = Some sig_id >} in
       let doc' = self#documentation doc in
+      let decl' = DocOckMaps.option_map self#decl decl in
+      let defn' = DocOckMaps.option_map self#defn defn in
       let expr' =
         match expr with
         | None -> expr
@@ -1889,20 +1902,26 @@ class ['a] resolver ?equal ?hash lookup_unit fetch_unit lookup_page fetch_page =
             if body != body' then Some body'
             else expr
       in
-      let expansion' = DocOckMaps.option_map self#module_expansion expansion in
-        if id != id' || doc != doc' || expr != expr' || expansion != expansion' then
-          {id = id'; doc = doc'; expr = expr'; expansion = expansion'}
+      let expansion' = self#module_expansion expansion in
+        if id != id' || doc != doc' || decl != decl'  || defn != defn'
+           || expr != expr' || expansion != expansion'
+        then
+          {id = id'; doc = doc'; decl = decl'; defn = defn';
+           expr = expr'; expansion = expansion'}
         else mty
 
     method! include_ incl =
       let open Include in
-      let {parent; doc; decl; expansion} = incl in
+      let {parent; doc; expr; expansion} = incl in
       let parent' = self#identifier_signature parent in
       let doc' = self#documentation doc in
-      let decl' = self#module_decl_with_id parent decl in
+      let expr' = self#module_expr_with_id parent expr in
       let expansion' = self#include_expansion expansion in
-        if parent != parent' || doc != doc' || decl != decl' || expansion != expansion' then
-          {parent = parent'; doc = doc'; decl = decl'; expansion = expansion'}
+        if parent != parent' || doc != doc'
+           || expr != expr' || expansion != expansion'
+        then
+          {parent = parent'; doc = doc';
+           expr = expr'; expansion = expansion'}
         else incl
 
     method! module_type_functor_arg arg =
@@ -1913,9 +1932,7 @@ class ['a] resolver ?equal ?hash lookup_unit fetch_unit lookup_page fetch_page =
           let id' = self#identifier_module id in
           let sig_id = Identifier.signature_of_module id' in
           let expr' = self#module_type_expr_with_id sig_id expr in
-          let expansion' =
-            DocOckMaps.option_map self#module_expansion expansion
-          in
+          let expansion' = self#module_expansion expansion in
             if id != id' || expr != expr' || expansion != expansion' then
               Some {id = id'; expr = expr'; expansion = expansion'}
             else arg
@@ -1960,20 +1977,20 @@ class ['a] resolver ?equal ?hash lookup_unit fetch_unit lookup_page fetch_page =
           let res' = self#module_type_expr_with_id id res in
           if res != res' || arg != arg' then Functor(arg', res')
           else expr
-        | TypeOf decl ->
-          let decl' = self#module_decl_with_id id decl in
-          if decl != decl' then TypeOf decl'
+        | TypeOf mexpr ->
+          let mexpr' = self#module_expr_with_id id mexpr in
+          if mexpr != mexpr' then TypeOf mexpr'
           else expr
         | Path _ | Signature _ -> self#module_type_expr expr
 
-    method module_decl_with_id id decl =
+    method module_expr_with_id id expr =
       let open Module in
-        match decl with
-        | ModuleType expr ->
-            let expr' = self#module_type_expr_with_id id expr in
-              if expr != expr' then ModuleType expr'
-              else decl
-        | Alias _ -> self#module_decl decl
+        match expr with
+        | ModuleType mtexpr ->
+            let mtexpr' = self#module_type_expr_with_id id mtexpr in
+              if mtexpr != mtexpr' then ModuleType mtexpr'
+              else expr
+        | Alias _ -> self#module_expr expr
 
     method! type_expr_package pkg =
       let open TypeExpr.Package in

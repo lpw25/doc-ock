@@ -524,12 +524,19 @@ class virtual ['a] module_ : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl : 'a Decl.t -> 'a Decl.t
+
+  method virtual defn : 'a Defn.t -> 'a Defn.t
+
   method virtual module_type_expr : 'a ModuleType.expr -> 'a ModuleType.expr
 
   method virtual signature : 'a Signature.t -> 'a Signature.t
 
   method virtual module_type_functor_arg :
     'a FunctorArgument.t option -> 'a FunctorArgument.t option
+
+  method virtual source_defn_map_signature :
+    'a Source.Defn_map.Signature.t -> 'a Source.Defn_map.Signature.t
 
   method module_expansion : 'a Module.expansion -> 'a Module.expansion
 
@@ -561,6 +568,12 @@ class virtual ['a] module_type : object
   method virtual fragment_type : 'a Fragment.type_ -> 'a Fragment.type_
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual module_expr : 'a Module.expr -> 'a Module.expr
 
@@ -629,6 +642,9 @@ class virtual ['a] include_ : object
 
   method virtual signature : 'a Signature.t -> 'a Signature.t
 
+  method virtual source_defn_map_signature :
+    'a Source.Defn_map.Signature.t -> 'a Source.Defn_map.Signature.t
+
   method include_expansion_resolved : bool -> bool
 
   method include_expansion : 'a Include.expansion -> 'a Include.expansion
@@ -647,6 +663,12 @@ class virtual ['a] type_decl : object
   method virtual identifier_field : 'a Identifier.field -> 'a Identifier.field
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
@@ -692,6 +714,12 @@ class virtual ['a] extension : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_decl_param : TypeDecl.param -> TypeDecl.param
 
   method virtual type_decl_private : bool -> bool
@@ -715,6 +743,12 @@ class virtual ['a] exception_ : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
   method virtual type_decl_constructor_argument :
@@ -730,6 +764,12 @@ class virtual ['a] value : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
   method value : 'a Value.t -> 'a Value.t
@@ -740,6 +780,12 @@ class virtual ['a] external_ : object
   method virtual identifier_value : 'a Identifier.value -> 'a Identifier.value
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
@@ -755,6 +801,12 @@ class virtual ['a] class_ : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_decl_param : TypeDecl.param -> TypeDecl.param
 
   method virtual class_type_expr : 'a ClassType.expr -> 'a ClassType.expr
@@ -764,6 +816,12 @@ class virtual ['a] class_ : object
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
   method virtual class_signature : 'a ClassSignature.t -> 'a ClassSignature.t
+
+  method virtual source_defn_map_class_signature :
+    'a Source.Defn_map.Class_signature.t ->
+    'a Source.Defn_map.Class_signature.t
+
+  method class_expansion : 'a Class.expansion -> 'a Class.expansion
 
   method class_expr : 'a Class.expr -> 'a Class.expr
 
@@ -782,7 +840,15 @@ class virtual ['a] class_type : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_decl_param : TypeDecl.param -> TypeDecl.param
+
+  method virtual class_expansion : 'a Class.expansion -> 'a Class.expansion
 
   method virtual class_signature : 'a ClassSignature.t -> 'a ClassSignature.t
 
@@ -824,6 +890,12 @@ class virtual ['a] method_ : object
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
   method method_ : 'a Method.t -> 'a Method.t
@@ -840,6 +912,12 @@ class virtual ['a] instance_variable : object
     'a Identifier.instance_variable -> 'a Identifier.instance_variable
 
   method virtual documentation : 'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual type_expr : 'a TypeExpr.t -> 'a TypeExpr.t
 
@@ -922,6 +1000,8 @@ class virtual ['a] unit : object
 
   method unit_import_digest : Digest.t -> Digest.t
 
+  method unit_expansion : 'a Unit.expansion -> 'a Unit.expansion
+
   method unit_packed_item : 'a Unit.Packed.item -> 'a Unit.Packed.item
 
   method unit_packed : 'a Unit.Packed.t -> 'a Unit.Packed.t
@@ -970,7 +1050,9 @@ class virtual ['a] source : object
   method virtual reference_instance_variable :
     'a Reference.instance_variable -> 'a Reference.instance_variable
 
-  method virtual decl : 'a Decl.t -> 'a Decl.t
+  method virtual decl_index : Decl.Index.t -> Decl.Index.t
+
+  method virtual defn_index : Defn.Index.t -> Defn.Index.t
 
   method virtual defn : 'a Defn.t -> 'a Defn.t
 
@@ -1007,17 +1089,17 @@ class virtual ['a] source : object
 
   method source : 'a Source.t -> 'a Source.t
 
-  method source_decl_map_type :
-    'a Source.Decl_map.Type.t ->
-    'a Source.Decl_map.Type.t
+  method source_defn_map_type :
+    'a Source.Defn_map.Type.t ->
+    'a Source.Defn_map.Type.t
 
-  method source_decl_map_class_signature :
-    'a Source.Decl_map.Class_signature.t ->
-    'a Source.Decl_map.Class_signature.t
+  method source_defn_map_class_signature :
+    'a Source.Defn_map.Class_signature.t ->
+    'a Source.Defn_map.Class_signature.t
 
-  method source_decl_map_signature :
-    'a Source.Decl_map.Signature.t ->
-    'a Source.Decl_map.Signature.t
+  method source_defn_map_signature :
+    'a Source.Defn_map.Signature.t ->
+    'a Source.Defn_map.Signature.t
 
 end
 

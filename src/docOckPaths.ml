@@ -394,21 +394,21 @@ module Identifier = struct
     in
       loop hash id
 
-  let rec signature_root : 'a signature -> 'a = function
-    | Root(r, _) -> r
+  let rec signature_root : 'a signature -> 'a * string = function
+    | Root(r, s) -> r, s
     | Module(id, _) -> signature_root id
     | Argument(id, _, _) -> signature_root id
     | ModuleType(id, _) -> signature_root id
 
-  let module_root : 'a module_ -> 'a = function
-    | Root(r, _) -> r
+  let module_root : 'a module_ -> 'a * string = function
+    | Root(r, s) -> r, s
     | Module(id, _) -> signature_root id
     | Argument(id, _, _) -> signature_root id
 
-  let module_type_root : 'a module_type -> 'a = function
+  let module_type_root : 'a module_type -> 'a * string = function
     | ModuleType(id, _) -> signature_root id
 
-  let class_signature_root : 'a class_signature -> 'a = function
+  let class_signature_root : 'a class_signature -> 'a * string = function
     | Class(id, _)
     | ClassType(id, _) -> signature_root id
 

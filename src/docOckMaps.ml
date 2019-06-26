@@ -1213,19 +1213,19 @@ class virtual ['a] module_ = object (self)
   method virtual module_type_functor_arg :
     'a FunctorArgument.t option -> 'a FunctorArgument.t option
 
-  method virtual source_decl_map_signature :
-    'a Source.Decl_map.Signature.t -> 'a Source.Decl_map.Signature.t
+  method virtual source_defn_map_signature :
+    'a Source.Defn_map.Signature.t -> 'a Source.Defn_map.Signature.t
 
   method module_hidden h = h
 
   method module_expansion expn =
     let open Module in
     match expn with
-    | Not_yet_expanded decl_map ->
-        let decl_map' = self#source_decl_map_signature decl_map in
-        if decl_map != decl_map' then Not_yet_expanded decl_map'
+    | NotYetExpanded defn_map ->
+        let defn_map' = self#source_defn_map_signature defn_map in
+        if defn_map != defn_map' then NotYetExpanded defn_map'
         else expn
-    | AlreadyASig -> AlreadyASig
+    | AlreadyASig -> expn
     | Signature sg ->
         let sg' = self#signature sg in
         if sg != sg' then Signature sg'
@@ -1236,47 +1236,47 @@ class virtual ['a] module_ = object (self)
         if args != args' || sg != sg' then Functor(args', sg')
         else expn
 
-  method module_decl decl =
+  method module_expr expr =
     let open Module in
-      match decl with
+      match expr with
       | Alias p ->
           let p' = self#path_module p in
             if p != p' then Alias p'
-            else decl
-      | ModuleType expr ->
-          let expr' = self#module_type_expr expr in
-            if expr != expr' then ModuleType expr'
-            else decl
+            else expr
+      | ModuleType mtexpr ->
+          let mtexpr' = self#module_type_expr mtexpr in
+            if mtexpr != mtexpr' then ModuleType mtexpr'
+            else expr
 
   method module_ md =
     let open Module in
-    let {id; doc; decl; defn; type_;
-         expansion; canonical; hidden; display_type} =
+    let {id; doc; decl; defn; expr;
+         expansion; canonical; hidden; display_expr} =
       md
     in
     let id' = self#identifier_module id in
     let doc' = self#documentation doc in
     let decl' = option_map self#decl decl in
     let defn' = option_map self#defn defn in
-    let type' = self#module_decl type_ in
+    let expr' = self#module_expr expr in
     let expansion' = self#module_expansion expansion in
     let canonical' =
       option_map (pair_map self#path_module self#reference_module) canonical
     in
     let hidden' = self#module_hidden hidden in
-    let display_type' = option_map self#module_decl display_type in
+    let display_expr' = option_map self#module_expr display_expr in
       if id != id' || doc != doc' || decl != decl'  || defn != defn'
-         || type_ != type' || expansion != expansion'
+         || expr != expr' || expansion != expansion'
          || canonical != canonical' || hidden != hidden'
-         || display_type != display_type'
+         || display_expr != display_expr'
       then
-        {id = id'; doc = doc'; type_ = type'; decl = decl'; defn = defn';
+        {id = id'; doc = doc'; decl = decl'; defn = defn'; expr = expr';
          expansion = expansion'; canonical = canonical'; hidden = hidden';
-         display_type = display_type'}
+         display_expr = display_expr'}
       else md
 
   method module_equation eq =
-    self#module_decl eq
+    self#module_expr eq
 
 end
 
@@ -1303,17 +1303,17 @@ class virtual ['a] module_type = object (self)
   method virtual fragment_type :
     'a Fragment.type_ -> 'a Fragment.type_
 
+  method virtual documentation :
+    'a Documentation.t -> 'a Documentation.t
+
   method virtual decl :
     'a Decl.t -> 'a Decl.t
 
   method virtual defn :
     'a Defn.t -> 'a Defn.t
 
-  method virtual documentation :
-    'a Documentation.t -> 'a Documentation.t
-
-  method virtual module_decl :
-    'a Module.decl -> 'a Module.decl
+  method virtual module_expr :
+    'a Module.expr -> 'a Module.expr
 
   method virtual module_equation :
     'a Module.Equation.t -> 'a Module.Equation.t
@@ -1376,9 +1376,9 @@ class virtual ['a] module_type = object (self)
           let substs' = list_map self#module_type_substitution substs in
             if body != body' || substs != substs' then With(body', substs')
             else expr
-      | TypeOf decl ->
-          let decl' = self#module_decl decl in
-            if decl != decl' then TypeOf decl'
+      | TypeOf mexpr ->
+          let mexpr' = self#module_expr mexpr in
+            if mexpr != mexpr' then TypeOf mexpr'
             else expr
 
   method module_type_functor_arg arg =
@@ -1500,8 +1500,8 @@ end
 
 class virtual ['a] include_ = object (self)
 
-  method virtual module_decl :
-    'a Module.decl -> 'a Module.decl
+  method virtual module_expr :
+    'a Module.expr -> 'a Module.expr
 
   method virtual identifier_signature :
     'a Identifier.signature -> 'a Identifier.signature
@@ -1511,27 +1511,32 @@ class virtual ['a] include_ = object (self)
 
   method virtual signature : 'a Signature.t -> 'a Signature.t
 
+  method virtual source_defn_map_signature :
+    'a Source.Defn_map.Signature.t -> 'a Source.Defn_map.Signature.t
+
   method include_expansion_resolved resolved =
     resolved
 
   method include_expansion expn =
     let open Include in
-    let {resolved; content; decl_map} = expn in
+    let {resolved; content; defn_map} = expn in
     let resolved' = self#include_expansion_resolved resolved in
     let content' = self#signature content in
-      if content != content' || resolved != resolved' then
-        {resolved = resolved'; content = content'}
+    let defn_map' = self#source_defn_map_signature defn_map in
+      if resolved != resolved' || content != content'
+         || defn_map != defn_map' then
+        {resolved = resolved'; content = content'; defn_map = defn_map'}
       else expn
 
   method include_ incl =
     let open Include in
-    let {parent; doc; decl; expansion} = incl in
+    let {parent; doc; expr; expansion} = incl in
     let parent' = self#identifier_signature parent in
     let doc' = self#documentation doc in
-    let decl' = self#module_decl decl in
+    let expr' = self#module_expr expr in
     let expansion' = self#include_expansion expansion in
-      if parent != parent' || doc != doc' || decl != decl' || expansion != expansion' then
-        {parent = parent'; doc = doc'; decl = decl'; expansion = expansion'}
+      if parent != parent' || doc != doc' || expr != expr' || expansion != expansion' then
+        {parent = parent'; doc = doc'; expr = expr'; expansion = expansion'}
       else incl
 
 end
@@ -1550,6 +1555,12 @@ class virtual ['a] type_decl = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
@@ -1567,26 +1578,34 @@ class virtual ['a] type_decl = object (self)
 
   method type_decl_constructor cstr =
     let open TypeDecl.Constructor in
-    let {id; doc; args; res} = cstr in
+    let {id; doc; decl; defn; args; res} = cstr in
     let id' = self#identifier_constructor id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let args' = self#type_decl_constructor_argument args in
     let res' = option_map self#type_expr res in
-      if id != id' || doc != doc' || args != args' || res != res' then
-        {id = id'; doc = doc'; args = args'; res = res'}
+      if id != id' || doc != doc' || decl != decl' || defn != defn'
+         || args != args' || res != res'
+      then
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         args = args'; res = res'}
       else cstr
 
   method type_decl_field field =
     let open TypeDecl.Field in
-    let {id; doc; mutable_; type_} = field in
+    let {id; doc; decl; defn; mutable_; type_} = field in
     let id' = self#identifier_field id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let mutable' = self#type_decl_field_mutable mutable_ in
     let type' = self#type_expr type_ in
-      if id != id' || doc != doc'
+      if id != id' || doc != doc' || decl != decl' || defn != defn'
          || mutable_ != mutable' || type_ != type'
       then
-        {id = id'; doc = doc'; mutable_ = mutable'; type_ = type'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         mutable_ = mutable'; type_ = type'}
       else field
 
   method type_decl_field_mutable mutable_ = mutable_
@@ -1647,21 +1666,23 @@ class virtual ['a] type_decl = object (self)
       if typ1 != typ1' || typ1 != typ1' then (typ1', typ2')
       else cstr
 
-  method type_decl decl =
+  method type_decl tdecl =
     let open TypeDecl in
-    let {id; doc; equation; representation = repr} = decl in
+    let {id; doc; decl; defn; equation; representation = repr} = tdecl in
     let id' = self#identifier_type id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let equation' = self#type_decl_equation equation in
     let repr' =
       option_map self#type_decl_representation repr
     in
-      if id != id' || doc != doc'
+      if id != id' || doc != doc' || decl != decl' || defn != defn'
          || equation != equation' || repr != repr'
       then
-        {id = id'; doc = doc';
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
          equation = equation'; representation = repr'}
-      else decl
+      else tdecl
 
 end
 
@@ -1675,6 +1696,12 @@ class virtual ['a] extension = object (self)
 
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual type_decl_param :
     TypeDecl.param -> TypeDecl.param
@@ -1690,13 +1717,18 @@ class virtual ['a] extension = object (self)
 
   method extension_constructor cstr =
     let open Extension.Constructor in
-    let {id; doc; args; res} = cstr in
+    let {id; doc; decl; defn; args; res} = cstr in
     let id' = self#identifier_extension id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let args' = self#type_decl_constructor_argument args in
     let res' = option_map self#type_expr res in
-      if id != id' || doc != doc' || args != args' || res != res' then
-        {id = id'; doc = doc'; args = args'; res = res'}
+      if id != id' || doc != doc'|| decl != decl' || defn != defn'
+         || args != args' || res != res'
+      then
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         args = args'; res = res'}
       else cstr
 
   method extension ext =
@@ -1724,6 +1756,12 @@ class virtual ['a] exception_ = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
@@ -1732,13 +1770,18 @@ class virtual ['a] exception_ = object (self)
 
   method exception_ exn =
     let open Exception in
-    let {id; doc; args; res} = exn in
+    let {id; doc; decl; defn; args; res} = exn in
     let id' = self#identifier_exception id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let args' = self#type_decl_constructor_argument args in
     let res' = option_map self#type_expr res in
-      if id != id' || doc != doc' || args != args' || res != res' then
-        {id = id'; doc = doc'; args = args'; res = res'}
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || args != args' || res != res'
+      then
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         args = args'; res = res'}
       else exn
 
 end
@@ -1751,17 +1794,27 @@ class virtual ['a] value = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
   method value v =
     let open Value in
-    let {id; doc; type_} = v in
+    let {id; doc; decl; defn; type_} = v in
     let id' = self#identifier_value id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let type' = self#type_expr type_ in
-      if id != id' || doc != doc' || type_ != type' then
-        {id = id'; doc = doc'; type_ = type'}
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || type_ != type'
+      then
+        {id = id'; doc = doc'; decl = decl'; defn = defn'; type_ = type'}
       else v
 
 end
@@ -1774,20 +1827,29 @@ class virtual ['a] external_ = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
   method external_ ve =
     let open External in
-    let {id; doc; type_; primitives} = ve in
+    let {id; doc; decl; defn; type_; primitives} = ve in
     let id' = self#identifier_value id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let type' = self#type_expr type_ in
     let primitives' = list_map self#external_primitive primitives in
-      if id != id' || doc != doc'
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
          || type_ != type' || primitives != primitives'
       then
-        {id = id'; doc = doc'; type_ = type'; primitives = primitives'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         type_ = type'; primitives = primitives'}
       else ve
 
   method external_primitive prim = prim
@@ -1801,6 +1863,12 @@ class virtual ['a] class_ = object (self)
 
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
+
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
 
   method virtual type_decl_param :
     TypeDecl.param -> TypeDecl.param
@@ -1817,35 +1885,56 @@ class virtual ['a] class_ = object (self)
   method virtual class_signature :
     'a ClassSignature.t -> 'a ClassSignature.t
 
-  method class_decl decl =
+  method virtual source_defn_map_class_signature :
+    'a Source.Defn_map.Class_signature.t ->
+    'a Source.Defn_map.Class_signature.t
+
+  method class_expansion expn =
     let open Class in
-      match decl with
-      | ClassType expr ->
-          let expr' = self#class_type_expr expr in
-            if expr != expr' then ClassType expr'
-            else decl
+    match expn with
+    | NotYetExpanded defn_map ->
+        let defn_map' = self#source_defn_map_class_signature defn_map in
+        if defn_map != defn_map' then NotYetExpanded defn_map'
+        else expn
+    | AlreadyASig -> expn
+    | Signature sg ->
+        let sg' = self#class_signature sg in
+        if sg != sg' then Signature sg'
+        else expn
+
+  method class_expr expr =
+    let open Class in
+      match expr with
+      | ClassType ctexpr ->
+          let ctexpr' = self#class_type_expr ctexpr in
+            if ctexpr != ctexpr' then ClassType ctexpr'
+            else expr
       | Arrow(lbl, typ, body) ->
           let lbl' = option_map self#type_expr_label lbl in
           let typ' = self#type_expr typ in
-          let body' = self#class_decl body in
+          let body' = self#class_expr body in
             if lbl != lbl' || typ != typ' || body != body' then
               Arrow(lbl', typ', body')
-            else decl
+            else expr
 
   method class_ cls =
     let open Class in
-    let {id; doc; virtual_; params; type_; expansion} = cls in
+    let {id; doc; decl; defn; virtual_; params; expr; expansion} = cls in
     let id' = self#identifier_class id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let virtual' = self#class_virtual virtual_ in
     let params' = list_map self#type_decl_param params in
-    let type' = self#class_decl type_ in
-    let expansion' = option_map self#class_signature expansion in
-      if id != id' || doc != doc' || virtual_ != virtual'
-         || params != params' || type_ != type' || expansion != expansion'
+    let expr' = self#class_expr expr in
+    let expansion' = self#class_expansion expansion in
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || virtual_ != virtual' || params != params' || expr != expr'
+         || expansion != expansion'
       then
-        {id = id'; doc = doc'; virtual_ = virtual';
-         params = params'; type_ = type'; expansion = expansion'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         virtual_ = virtual'; params = params'; expr = expr';
+         expansion = expansion'}
       else cls
 
   method class_virtual virt = virt
@@ -1863,11 +1952,20 @@ class virtual ['a] class_type = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_decl_param :
     TypeDecl.param -> TypeDecl.param
 
   method virtual class_signature :
     'a ClassSignature.t -> 'a ClassSignature.t
+
+  method virtual class_expansion :
+    'a Class.expansion -> 'a Class.expansion
 
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
@@ -1887,18 +1985,22 @@ class virtual ['a] class_type = object (self)
 
   method class_type clty =
     let open ClassType in
-    let {id; doc; virtual_; params; expr; expansion} = clty in
+    let {id; doc; decl; defn; virtual_; params; expr; expansion} = clty in
     let id' = self#identifier_class_type id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let virtual' = self#class_type_virtual virtual_ in
     let params' = list_map self#type_decl_param params in
     let expr' = self#class_type_expr expr in
-    let expansion' = option_map self#class_signature expansion in
-      if id != id' || doc != doc' || virtual_ != virtual'
-         || params != params' || expr != expr' || expansion != expansion'
+    let expansion' = self#class_expansion expansion in
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || virtual_ != virtual' || params != params' || expr != expr'
+         || expansion != expansion'
       then
-        {id = id'; doc = doc'; virtual_ = virtual';
-         params = params'; expr = expr'; expansion = expansion'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         virtual_ = virtual'; params = params'; expr = expr';
+         expansion = expansion'}
       else clty
 
   method class_type_virtual virt = virt
@@ -1966,22 +2068,30 @@ class virtual ['a] method_ = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
   method method_ meth =
     let open Method in
-    let {id; doc; private_; virtual_; type_} = meth in
+    let {id; doc; decl; defn; private_; virtual_; type_} = meth in
     let id' = self#identifier_method id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let private' = self#method_private private_ in
     let virtual' = self#method_virtual virtual_ in
     let type' = self#type_expr type_ in
-      if id != id' || doc != doc' || private_ != private'
-         || virtual_ != virtual' || type_ != type'
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || private_ != private' || virtual_ != virtual' || type_ != type'
       then
-        {id = id'; doc = doc'; private_ = private';
-         virtual_ = virtual'; type_ = type'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         private_ = private'; virtual_ = virtual'; type_ = type'}
       else meth
 
   method method_private priv = priv
@@ -1998,22 +2108,30 @@ class virtual ['a] instance_variable = object (self)
   method virtual documentation :
     'a Documentation.t -> 'a Documentation.t
 
+  method virtual decl :
+    'a Decl.t -> 'a Decl.t
+
+  method virtual defn :
+    'a Defn.t -> 'a Defn.t
+
   method virtual type_expr :
     'a TypeExpr.t -> 'a TypeExpr.t
 
   method instance_variable meth =
     let open InstanceVariable in
-    let {id; doc; mutable_; virtual_; type_} = meth in
+    let {id; doc; decl; defn; mutable_; virtual_; type_} = meth in
     let id' = self#identifier_instance_variable id in
     let doc' = self#documentation doc in
+    let decl' = option_map self#decl decl in
+    let defn' = option_map self#defn defn in
     let mutable' = self#instance_variable_mutable mutable_ in
     let virtual' = self#instance_variable_virtual virtual_ in
     let type' = self#type_expr type_ in
-      if id != id' || doc != doc' || mutable_ != mutable'
-         || virtual_ != virtual' || type_ != type'
+      if id != id' || doc != doc' || decl != decl'  || defn != defn'
+         || mutable_ != mutable' || virtual_ != virtual' || type_ != type'
       then
-        {id = id'; doc = doc'; mutable_ = mutable';
-         virtual_ = virtual'; type_ = type'}
+        {id = id'; doc = doc'; decl = decl'; defn = defn';
+         mutable_ = mutable'; virtual_ = virtual'; type_ = type'}
       else meth
 
   method instance_variable_mutable mut = mut
@@ -2199,6 +2317,9 @@ class virtual ['a] unit = object (self)
   method virtual signature :
     'a Signature.t -> 'a Signature.t
 
+  method virtual source :
+    'a Source.t -> 'a Source.t
+
   method unit_import import =
     let open Unit.Import in
       match import with
@@ -2217,21 +2338,15 @@ class virtual ['a] unit = object (self)
 
   method unit_import_digest digest = digest
 
-  method unit_source source =
-    let open Unit.Source in
-    let {file; build_dir; digest} = source in
-    let file' = self#unit_source_file file in
-    let build_dir' = self#unit_source_build_dir build_dir in
-    let digest' = self#unit_source_digest digest in
-      if file != file' || build_dir != build_dir' || digest != digest' then
-        {file = file'; build_dir = build_dir'; digest = digest'}
-      else source
-
-  method unit_source_file file = file
-
-  method unit_source_build_dir build_dir = build_dir
-
-  method unit_source_digest digest = digest
+  method unit_expansion expn =
+    let open Unit in
+    match expn with
+    | NotYetExpanded -> expn
+    | AlreadyASig -> expn
+    | Signature sg ->
+        let sg' = self#signature sg in
+        if sg != sg' then Signature sg'
+        else expn
 
   method unit_packed_item item =
     let open Unit.Packed in
@@ -2265,11 +2380,11 @@ class virtual ['a] unit = object (self)
     let doc' = self#documentation doc in
     let digest' = self#unit_digest digest in
     let imports' = list_map self#unit_import imports in
-    let source' = option_map self#unit_source source in
+    let source' = self#source source in
     let interface' = self#unit_interface interface in
     let hidden' = self#unit_hidden hidden in
     let content' = self#unit_content content in
-    let expansion' = option_map self#signature expansion in
+    let expansion' = self#unit_expansion expansion in
       if id != id' || doc != doc' || digest != digest'
          || imports != imports' || source != source'
          || interface != interface' || hidden != hidden'
@@ -2289,7 +2404,7 @@ class virtual ['a] unit = object (self)
 
 end
 
-class virtual ['a] source = object
+class virtual ['a] source = object (self)
 
   method virtual path_module :
     'a Path.module_ -> 'a Path.module_
@@ -2321,11 +2436,11 @@ class virtual ['a] source = object
   method virtual reference_instance_variable :
     'a Reference.instance_variable -> 'a Reference.instance_variable
 
-  method virtual declaration :
-    'a Declaration.t -> 'a Declaration.t
+  method virtual decl_index : Decl.Index.t -> Decl.Index.t
 
-  method virtual definition :
-    'a Definition.t -> 'a Definition.t
+  method virtual defn_index : Defn.Index.t -> Defn.Index.t
+
+  method virtual defn : 'a Defn.t -> 'a Defn.t
 
   method source_file_name name = name
 
@@ -2372,9 +2487,9 @@ class virtual ['a] source = object
           let p' = self#path_module p in
           if p != p' then Module p'
           else use_path
-      | Module_type p ->
+      | ModuleType p ->
           let p' = self#path_module_type p in
-          if p != p' then Module_type p'
+          if p != p' then ModuleType p'
           else use_path
       | Type p ->
           let p' = self#path_type p in
@@ -2385,28 +2500,20 @@ class virtual ['a] source = object
           if r != r' then Constructor r'
           else use_path
       | Field r ->
-          let p' = self#reference_field p in
-          if p != p' then Field p'
+          let r' = self#reference_field r in
+          if r != r' then Field r'
           else use_path
       | Value r ->
-          let p' = self#reference_value p in
-          if p != p' then Value p'
+          let r' = self#reference_value r in
+          if r != r' then Value r'
           else use_path
       | Class r ->
-          let p' = self#reference_class p in
-          if p != p' then Class p'
+          let r' = self#reference_class r in
+          if r != r' then Class r'
           else use_path
-      | Class_type p ->
+      | ClassType p ->
           let p' = self#path_class_type p in
-          if p != p' then Class_type p'
-          else use_path
-      | Method r ->
-          let r' = self#reference_method r in
-          if r != r' then Method r'
-          else use_path
-      | Instance_variable r ->
-          let r' = self#reference_instance_variable r in
-          if r != r' then Instance_variable r'
+          if p != p' then ClassType p'
           else use_path
 
   method source_use use =
@@ -2421,7 +2528,7 @@ class virtual ['a] source = object
   method source_declaration declaration =
     let open Source.Declaration in
     let {index; location} = declaration in
-    let index' = self#declaration_index index in
+    let index' = self#decl_index index in
     let location' = self#source_location location in
       if index != index' || location != location' then
         {index = index'; location = location'}
@@ -2430,7 +2537,7 @@ class virtual ['a] source = object
   method source_definition definition =
     let open Source.Definition in
     let {index; location} = definition in
-    let index' = self#definition_index index in
+    let index' = self#defn_index index in
     let location' = self#source_location location in
       if index != index' || location != location' then
         {index = index'; location = location'}
@@ -2441,7 +2548,7 @@ class virtual ['a] source = object
     let {file; uses; declarations} = interface in
     let file' = self#source_file file in
     let uses' = list_map self#source_use uses in
-    let declarations' = list_map self#source_declaration uses in
+    let declarations' = list_map self#source_declaration declarations in
       if file != file' || uses != uses' || declarations != declarations' then
         {file = file'; uses = uses'; declarations = declarations'}
       else interface
@@ -2451,7 +2558,7 @@ class virtual ['a] source = object
     let {file; uses; definitions} = implementation in
     let file' = self#source_file file in
     let uses' = list_map self#source_use uses in
-    let definitions' = list_map self#source_definition uses in
+    let definitions' = list_map self#source_definition definitions in
       if file != file' || uses != uses' || definitions != definitions' then
         {file = file'; uses = uses'; definitions = definitions'}
       else implementation
@@ -2467,7 +2574,7 @@ class virtual ['a] source = object
         {interface = interface'; implementation = implementation'}
       else source
 
-  inherit ['a] Source.Decl.map
+  inherit ['a] Source.Defn_map.map
 
 end
 

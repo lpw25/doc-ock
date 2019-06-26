@@ -458,7 +458,7 @@ and signature_items local =
     | Module md :: rest ->
         let open Module in
         let name = Identifier.name md.id in
-        let decl = module_decl local md.type_ in
+        let decl = module_decl local md.expr in
         let decl = set_canonical decl md.canonical in
         let decl = set_hidden decl md.hidden in
         add_local_module_identifier local md.id decl;
@@ -518,7 +518,7 @@ and signature_items local =
         let sg = signature_items local rest in
         let sg = add_documentation cl.doc sg in
         let name = Identifier.name cl.id in
-        let expr = class_decl local cl.type_ in
+        let expr = class_decl local cl.expr in
           add_class name expr sg
     | ClassType clty :: rest ->
         let open ClassType in
@@ -529,7 +529,7 @@ and signature_items local =
           add_class_type name expr sg
     | Include incl :: rest ->
         let open Include in
-        let decl = module_decl local incl.decl in
+        let decl = module_decl local incl.expr in
         add_local_modules local incl.parent (modules decl);
         add_local_module_types local incl.parent (module_types decl);
         let sg = signature_items local rest in

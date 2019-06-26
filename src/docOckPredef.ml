@@ -203,7 +203,7 @@ let sys_blocked_io_reference = Resolved(Identifier sys_blocked_io_identifier)
 let undefined_recursive_module_reference =
   Resolved(Identifier undefined_recursive_module_identifier)
 
-let false_decl =
+let false_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -213,7 +213,7 @@ let false_decl =
   let res = None in
     {id = false_identifier; doc; decl; defn; args; res}
 
-let true_decl =
+let true_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -221,9 +221,9 @@ let true_decl =
   let defn = None in
   let args = Tuple [] in
   let res = None in
-    {id = true_identifier; doc; args; res}
+    {id = true_identifier; doc; decl; defn; args; res}
 
-let void_decl =
+let void_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -231,9 +231,9 @@ let void_decl =
   let defn = None in
   let args = Tuple [] in
   let res = None in
-    {id = void_identifier; doc; args; res}
+    {id = void_identifier; doc; decl; defn; args; res}
 
-let nil_decl =
+let nil_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -241,9 +241,9 @@ let nil_decl =
   let defn = None in
   let args = Tuple [] in
   let res = None in
-    {id = nil_identifier; doc; args; res}
+    {id = nil_identifier; doc; decl; defn; args; res}
 
-let cons_decl =
+let cons_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -253,9 +253,9 @@ let cons_decl =
   let tail = TypeExpr.(Constr(list_path, [head])) in
   let args = Tuple [head; tail] in
   let res = None in
-    {id = cons_identifier; doc; args; res}
+    {id = cons_identifier; doc; decl; defn; args; res}
 
-let none_decl =
+let none_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -263,9 +263,9 @@ let none_decl =
   let defn = None in
   let args = Tuple [] in
   let res = None in
-    {id = none_identifier; doc; args; res}
+    {id = none_identifier; doc; decl; defn; args; res}
 
-let some_decl =
+let some_tdecl =
   let open TypeDecl.Constructor in
   let open Documentation in
   let doc = Ok empty_doc in
@@ -274,10 +274,10 @@ let some_decl =
   let var = TypeExpr.Var "'a" in
   let args = Tuple [var] in
   let res = None in
-    {id = some_identifier; doc; args; res}
+    {id = some_identifier; doc; decl; defn; args; res}
 
 
-let int_decl =
+let int_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = int_identifier in
@@ -287,9 +287,9 @@ let int_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let char_decl =
+let char_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = char_identifier in
@@ -299,9 +299,9 @@ let char_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let bytes_decl =
+let bytes_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = bytes_identifier in
@@ -311,9 +311,9 @@ let bytes_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let string_decl =
+let string_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = string_identifier in
@@ -323,9 +323,9 @@ let string_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let float_decl =
+let float_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = float_identifier in
@@ -335,9 +335,9 @@ let float_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let bool_decl =
+let bool_tdecl =
   let open TypeDecl in
   let open Representation in
   let open Documentation in
@@ -347,10 +347,10 @@ let bool_decl =
   let decl = None in
   let defn = None in
   let equation = nullary_equation in
-  let representation = Some (Variant [false_decl; true_decl]) in
-    {id; doc; equation; representation}
+  let representation = Some (Variant [false_tdecl; true_tdecl]) in
+    {id; doc; decl; defn; equation; representation}
 
-let unit_decl =
+let unit_tdecl =
   let open TypeDecl in
   let open Representation in
   let open Documentation in
@@ -360,10 +360,10 @@ let unit_decl =
   let decl = None in
   let defn = None in
   let equation = nullary_equation in
-  let representation = Some (Variant [void_decl]) in
-    {id; doc; equation; representation}
+  let representation = Some (Variant [void_tdecl]) in
+    {id; doc; decl; defn; equation; representation}
 
-let exn_decl =
+let exn_tdecl =
   let open TypeDecl in
   let open Representation in
   let open Documentation in
@@ -374,9 +374,9 @@ let exn_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = Some Extensible in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let array_decl =
+let array_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = array_identifier in
@@ -390,9 +390,9 @@ let array_decl =
   let defn = None in
   let equation = invariant_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let list_decl =
+let list_tdecl =
   let open TypeDecl in
   let open Representation in
   let open Documentation in
@@ -406,10 +406,10 @@ let list_decl =
   let decl = None in
   let defn = None in
   let equation = covariant_equation in
-  let representation = Some (Variant [nil_decl; cons_decl]) in
-    {id; doc; equation; representation}
+  let representation = Some (Variant [nil_tdecl; cons_tdecl]) in
+    {id; doc; decl; defn; equation; representation}
 
-let option_decl =
+let option_tdecl =
   let open TypeDecl in
   let open Representation in
   let open Documentation in
@@ -423,10 +423,10 @@ let option_decl =
   let decl = None in
   let defn = None in
   let equation = covariant_equation in
-  let representation = Some (Variant [none_decl; some_decl]) in
-    {id; doc; equation; representation}
+  let representation = Some (Variant [none_tdecl; some_tdecl]) in
+    {id; doc; decl; defn; equation; representation}
 
-let int32_decl =
+let int32_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = int32_identifier in
@@ -440,9 +440,9 @@ let int32_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let int64_decl =
+let int64_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = int64_identifier in
@@ -456,9 +456,9 @@ let int64_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let nativeint_decl =
+let nativeint_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = nativeint_identifier in
@@ -473,9 +473,9 @@ let nativeint_decl =
   let defn = None in
   let equation = nullary_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let lazy_t_decl =
+let lazy_t_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = lazy_t_identifier in
@@ -489,9 +489,9 @@ let lazy_t_decl =
   let defn = None in
   let equation = covariant_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let extension_constructor_decl =
+let extension_constructor_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = extension_constructor_identifier in
@@ -505,9 +505,9 @@ let extension_constructor_decl =
   let defn = None in
   let equation = covariant_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let floatarray_decl =
+let floatarray_tdecl =
   let open TypeDecl in
   let open Documentation in
   let id = floatarray_identifier in
@@ -521,9 +521,9 @@ let floatarray_decl =
   let defn = None in
   let equation = covariant_equation in
   let representation = None in
-    {id; doc; equation; representation}
+    {id; doc; decl; defn; equation; representation}
 
-let match_failure_decl =
+let match_failure_exn =
   let open Exception in
   let open Documentation in
   let id = match_failure_identifier in
@@ -542,9 +542,9 @@ let match_failure_decl =
     TypeDecl.Constructor.Tuple [TypeExpr.Tuple[string_expr; int_expr; int_expr]]
   in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let assert_failure_decl =
+let assert_failure_exn =
   let open Exception in
   let open Documentation in
   let id = assert_failure_identifier in
@@ -563,9 +563,9 @@ let assert_failure_decl =
     TypeDecl.Constructor.Tuple [TypeExpr.Tuple[string_expr; int_expr; int_expr]]
   in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let invalid_argument_decl =
+let invalid_argument_exn =
   let open Exception in
   let open Documentation in
   let id = invalid_argument_identifier in
@@ -578,9 +578,9 @@ let invalid_argument_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let failure_decl =
+let failure_exn =
   let open Exception in
   let open Documentation in
   let id = failure_identifier in
@@ -593,9 +593,9 @@ let failure_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let not_found_decl =
+let not_found_exn =
   let open Exception in
   let open Documentation in
   let id = not_found_identifier in
@@ -608,9 +608,9 @@ let not_found_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let out_of_memory_decl =
+let out_of_memory_exn =
   let open Exception in
   let open Documentation in
   let id = out_of_memory_identifier in
@@ -623,10 +623,10 @@ let out_of_memory_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
 (* TODO: Provide reference to the OCaml manual *)
-let stack_overflow_decl =
+let stack_overflow_exn =
   let open Exception in
   let open Documentation in
   let id = stack_overflow_identifier in
@@ -642,9 +642,9 @@ let stack_overflow_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let sys_error_decl =
+let sys_error_exn =
   let open Exception in
   let open Documentation in
   let id = sys_error_identifier in
@@ -657,9 +657,9 @@ let sys_error_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [TypeExpr.Constr(string_path, [])] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let end_of_file_decl =
+let end_of_file_exn =
   let open Exception in
   let open Documentation in
   let id = end_of_file_identifier in
@@ -672,9 +672,9 @@ let end_of_file_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let division_by_zero_decl =
+let division_by_zero_exn =
   let open Exception in
   let open Documentation in
   let id = division_by_zero_identifier in
@@ -687,9 +687,9 @@ let division_by_zero_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
-let sys_blocked_io_decl =
+let sys_blocked_io_exn =
   let open Exception in
   let open Documentation in
   let id = sys_blocked_io_identifier in
@@ -703,10 +703,10 @@ let sys_blocked_io_decl =
   let defn = None in
   let args = TypeDecl.Constructor.Tuple [] in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
 (* TODO: Provide reference to the OCaml manual *)
-let undefined_recursive_module_decl =
+let undefined_recursive_module_exn =
   let open Exception in
   let open Documentation in
   let id = undefined_recursive_module_identifier in
@@ -725,15 +725,15 @@ let undefined_recursive_module_decl =
     TypeDecl.Constructor.Tuple [TypeExpr.Tuple[string_expr; int_expr; int_expr]]
   in
   let res = None in
-    {id; doc; args; res}
+    {id; doc; decl; defn; args; res}
 
 let core_types =
-  [int_decl; char_decl; bytes_decl; string_decl; float_decl; bool_decl;
-   unit_decl; exn_decl; array_decl; list_decl; option_decl; int32_decl;
-   int64_decl; nativeint_decl; lazy_t_decl; floatarray_decl]
+  [int_tdecl; char_tdecl; bytes_tdecl; string_tdecl; float_tdecl; bool_tdecl;
+   unit_tdecl; exn_tdecl; array_tdecl; list_tdecl; option_tdecl; int32_tdecl;
+   int64_tdecl; nativeint_tdecl; lazy_t_tdecl; floatarray_tdecl]
 
 let core_exceptions =
-  [match_failure_decl; assert_failure_decl; invalid_argument_decl;
-   failure_decl; not_found_decl; out_of_memory_decl; stack_overflow_decl;
-   sys_error_decl; end_of_file_decl; division_by_zero_decl;
-   sys_blocked_io_decl; undefined_recursive_module_decl]
+  [match_failure_exn; assert_failure_exn; invalid_argument_exn;
+   failure_exn; not_found_exn; out_of_memory_exn; stack_overflow_exn;
+   sys_error_exn; end_of_file_exn; division_by_zero_exn;
+   sys_blocked_io_exn; undefined_recursive_module_exn]

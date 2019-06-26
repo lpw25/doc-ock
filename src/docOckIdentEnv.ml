@@ -238,6 +238,100 @@ let find_type env id =
 let find_class_type env id =
   Ident.find_same id env.class_types
 
+module Use = struct
+
+  open DocOckPaths.Path
+
+  let rec read_module_path = function
+    | Path.Pident id ->
+        if Ident.persistent id then Root (Ident.name id)
+        else raise Not_found
+    | Path.Pdot(p, s, _) ->
+        Dot(read_module_path p, s)
+    | Path.Papply(p, arg) ->
+        Apply(read_module_path p, read_module_path arg)
+
+  let read_module_type_path = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Dot(read_module_path p, s)
+    | Path.Papply(_, _)-> assert false
+
+  let read_class_type_path = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Dot(read_module_path p, s)
+    | Path.Papply(_, _)-> assert false
+
+  let read_type_path = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Dot(read_module_path p, s)
+    | Path.Papply(_, _)-> assert false
+
+  open DocOckPaths.Reference
+
+  let rec read_module_reference = function
+    | Path.Pident id ->
+        if Ident.persistent id then Root (Ident.name id, TModule)
+        else raise Not_found
+    | Path.Pdot(p, s, _) ->
+        Module(read_module_reference p, s)
+    | Path.Papply(_, _) -> raise Not_found
+
+  let read_module_type_reference = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> ModuleType(read_module_reference p, s)
+    | Path.Papply(_, _)-> assert false
+
+  let read_type_reference = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Type(read_module_reference p, s)
+    | Path.Papply(_, _)-> assert false
+
+  let read_value_reference = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Value(read_module_reference p, s)
+    | Path.Papply(_, _)-> assert false
+
+  let read_class_reference = function
+    | Path.Pident id -> raise Not_found
+    | Path.Pdot(p, s, _) -> Class(read_module_reference p, s)
+    | Path.Papply(_, _)-> assert false
+
+  open DocOckSource.Use
+
+  let read_module location path =
+    let path = Module(read_module_path path) in
+    { path; location }
+
+  let read_module_type location path =
+    let path = ModuleType(read_module_type_path path) in
+    { path; location }
+
+  let read_type location path =
+    let path = Type(read_type_path path) in
+    { path; location }
+
+  let read_constructor location path name =
+    let path = Constructor(Constructor(read_type_reference path, name)) in
+    { path; location }
+
+  let read_field location path name =
+    let path = Field(Field(read_type_reference path, name)) in
+    { path; location }
+
+  let read_value location path =
+    let path = Value(read_value_reference path) in
+    { path; location }
+
+  let read_class location path =
+    let path = Class(read_class_reference path) in
+    { path; location }
+
+  let read_class_type location path =
+    let path = ClassType(read_class_type_path path) in
+    { path; location }
+
+end
+
 module Path = struct
 
   open DocOckPaths.Path.Resolved

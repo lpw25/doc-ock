@@ -123,37 +123,40 @@ val division_by_zero_reference : 'a Reference.exception_
 val sys_blocked_io_reference : 'a Reference.exception_
 val undefined_recursive_module_reference : 'a Reference.exception_
 
-(** {3 Declarations} *)
+(** {3 Type declarations} *)
 
-val int_decl : 'a TypeDecl.t
-val char_decl : 'a TypeDecl.t
-val bytes_decl : 'a TypeDecl.t
-val string_decl : 'a TypeDecl.t
-val float_decl : 'a TypeDecl.t
-val bool_decl : 'a TypeDecl.t
-val unit_decl : 'a TypeDecl.t
-val exn_decl : 'a TypeDecl.t
-val array_decl : 'a TypeDecl.t
-val list_decl : 'a TypeDecl.t
-val option_decl : 'a TypeDecl.t
-val int32_decl : 'a TypeDecl.t
-val int64_decl : 'a TypeDecl.t
-val nativeint_decl : 'a TypeDecl.t
-val lazy_t_decl : 'a TypeDecl.t
-val extension_constructor_decl : 'a TypeDecl.t
-
-val match_failure_decl : 'a Exception.t
-val assert_failure_decl : 'a Exception.t
-val invalid_argument_decl : 'a Exception.t
-val failure_decl : 'a Exception.t
-val not_found_decl : 'a Exception.t
-val out_of_memory_decl : 'a Exception.t
-val stack_overflow_decl : 'a Exception.t
-val sys_error_decl : 'a Exception.t
-val end_of_file_decl : 'a Exception.t
-val division_by_zero_decl : 'a Exception.t
-val sys_blocked_io_decl : 'a Exception.t
-val undefined_recursive_module_decl : 'a Exception.t
+val int_tdecl : 'a TypeDecl.t
+val char_tdecl : 'a TypeDecl.t
+val bytes_tdecl : 'a TypeDecl.t
+val string_tdecl : 'a TypeDecl.t
+val float_tdecl : 'a TypeDecl.t
+val bool_tdecl : 'a TypeDecl.t
+val unit_tdecl : 'a TypeDecl.t
+val exn_tdecl : 'a TypeDecl.t
+val array_tdecl : 'a TypeDecl.t
+val list_tdecl : 'a TypeDecl.t
+val option_tdecl : 'a TypeDecl.t
+val int32_tdecl : 'a TypeDecl.t
+val int64_tdecl : 'a TypeDecl.t
+val nativeint_tdecl : 'a TypeDecl.t
+val lazy_t_tdecl : 'a TypeDecl.t
+val extension_constructor_tdecl : 'a TypeDecl.t
 
 val core_types : 'a TypeDecl.t list
+
+(** {3 Exception declarations} *)
+
+val match_failure_exn : 'a Exception.t
+val assert_failure_exn : 'a Exception.t
+val invalid_argument_exn : 'a Exception.t
+val failure_exn : 'a Exception.t
+val not_found_exn : 'a Exception.t
+val out_of_memory_exn : 'a Exception.t
+val stack_overflow_exn : 'a Exception.t
+val sys_error_exn : 'a Exception.t
+val end_of_file_exn : 'a Exception.t
+val division_by_zero_exn : 'a Exception.t
+val sys_blocked_io_exn : 'a Exception.t
+val undefined_recursive_module_exn : 'a Exception.t
+
 val core_exceptions : 'a Exception.t list

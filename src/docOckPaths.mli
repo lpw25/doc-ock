@@ -261,13 +261,13 @@ module Identifier : sig
 
   (** {2 Root retrieval} *)
 
-  val signature_root : 'a signature -> 'a
+  val signature_root : 'a signature -> 'a * string
 
-  val module_root : 'a module_ -> 'a
+  val module_root : 'a module_ -> 'a * string
 
-  val module_type_root : 'a module_type -> 'a
+  val module_type_root : 'a module_type -> 'a * string
 
-  val class_signature_root : 'a class_signature -> 'a
+  val class_signature_root : 'a class_signature -> 'a * string
 end
 
 (** Normal OCaml paths (i.e. the ones present in types) *)
